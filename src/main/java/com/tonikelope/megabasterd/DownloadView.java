@@ -9,26 +9,19 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Color;
-import java.awt.Desktop;
+import javax.swing.*;
+import java.awt.*;
 import java.io.File;
-import static java.lang.Integer.MAX_VALUE;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JProgressBar;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MiscTools.copyTextToClipboard;
+import static java.lang.Integer.MAX_VALUE;
 
 /**
- *
  * @author tonikelope
  */
 public class DownloadView extends javax.swing.JPanel implements TransferenceView {
@@ -36,107 +29,107 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     private final Download _download;
 
     public JButton getQueue_bottom_button() {
-        return queue_bottom_button;
+        return this.queue_bottom_button;
     }
 
     public JButton getQueue_top_button() {
-        return queue_top_button;
+        return this.queue_top_button;
     }
 
     public JButton getQueue_down_button() {
-        return queue_down_button;
+        return this.queue_down_button;
     }
 
     public JButton getQueue_up_button() {
-        return queue_up_button;
+        return this.queue_up_button;
     }
 
     public JButton getClose_button() {
-        return close_button;
+        return this.close_button;
     }
 
     public JButton getCopy_link_button() {
-        return copy_link_button;
+        return this.copy_link_button;
     }
 
     public JButton getOpen_folder_button() {
-        return open_folder_button;
+        return this.open_folder_button;
     }
 
     public JLabel getFile_name_label() {
-        return file_name_label;
+        return this.file_name_label;
     }
 
     public JLabel getFile_size_label() {
-        return file_size_label;
+        return this.file_size_label;
     }
 
     public JCheckBox getKeep_temp_checkbox() {
-        return keep_temp_checkbox;
+        return this.keep_temp_checkbox;
     }
 
     public JButton getPause_button() {
-        return pause_button;
+        return this.pause_button;
     }
 
     public JProgressBar getProgress_pbar() {
-        return progress_pbar;
+        return this.progress_pbar;
     }
 
     public JButton getRestart_button() {
-        return restart_button;
+        return this.restart_button;
     }
 
     public JLabel getSlot_status_label() {
-        return slot_status_label;
+        return this.slot_status_label;
     }
 
     public JLabel getSlots_label() {
-        return slots_label;
+        return this.slots_label;
     }
 
     public JSpinner getSlots_spinner() {
-        return slots_spinner;
+        return this.slots_spinner;
     }
 
     public JLabel getSpeed_label() {
-        return speed_label;
+        return this.speed_label;
     }
 
     public JLabel getStatus_label() {
-        return status_label;
+        return this.status_label;
     }
 
     public JButton getStop_button() {
-        return stop_button;
+        return this.stop_button;
     }
 
-    public DownloadView(Download download) {
+    public DownloadView(final Download download) {
 
-        DownloadView tthis = this;
+        final DownloadView tthis = this;
 
-        _download = download;
+        this._download = download;
 
         MiscTools.GUIRunAndWait(() -> {
 
-            initComponents();
+            this.initComponents();
 
-            updateFonts(tthis, GUI_FONT, download.getMain_panel().getZoom_factor());
+//            updateFonts(tthis, GUI_FONT, download.getMain_panel().getZoom_factor());
+//
+//            translateLabels(tthis);
 
-            translateLabels(tthis);
+            this.slots_spinner.setModel(new SpinnerNumberModel(this._download.getMain_panel().getDefault_slots_down(), Download.MIN_WORKERS, Download.MAX_WORKERS, 1));
 
-            slots_spinner.setModel(new SpinnerNumberModel(_download.getMain_panel().getDefault_slots_down(), Download.MIN_WORKERS, Download.MAX_WORKERS, 1));
+            ((JSpinner.DefaultEditor) this.slots_spinner.getEditor()).getTextField().setEditable(false);
 
-            ((JSpinner.DefaultEditor) slots_spinner.getEditor()).getTextField().setEditable(false);
+            this.speed_label.setForeground(new Color(0, 128, 255));
+            this.progress_pbar.setMinimum(0);
+            this.progress_pbar.setMaximum(MAX_VALUE);
+            this.progress_pbar.setStringPainted(true);
 
-            speed_label.setForeground(new Color(0, 128, 255));
-            progress_pbar.setMinimum(0);
-            progress_pbar.setMaximum(MAX_VALUE);
-            progress_pbar.setStringPainted(true);
+            this.status_label.setText("");
 
-            status_label.setText("");
-
-            for (JComponent c : new JComponent[]{queue_top_button, queue_bottom_button, queue_up_button, queue_down_button, slots_spinner, slots_label, pause_button, stop_button, speed_label, progress_pbar, keep_temp_checkbox, file_name_label, close_button, copy_link_button, restart_button, file_size_label, open_folder_button}) {
+            for (final JComponent c : new JComponent[]{this.queue_top_button, this.queue_bottom_button, this.queue_up_button, this.queue_down_button, this.slots_spinner, this.slots_label, this.pause_button, this.stop_button, this.speed_label, this.progress_pbar, this.keep_temp_checkbox, this.file_name_label, this.close_button, this.copy_link_button, this.restart_button, this.file_size_label, this.open_folder_button}) {
 
                 c.setVisible(false);
             }
@@ -147,12 +140,12 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public void hideAllExceptStatus() {
 
         MiscTools.GUIRunAndWait(() -> {
-            for (JComponent c : new JComponent[]{speed_label, slots_spinner, slots_label, slot_status_label, slot_status_label, pause_button, stop_button, progress_pbar, keep_temp_checkbox}) {
+            for (final JComponent c : new JComponent[]{this.speed_label, this.slots_spinner, this.slots_label, this.slot_status_label, this.slot_status_label, this.pause_button, this.stop_button, this.progress_pbar, this.keep_temp_checkbox}) {
 
                 c.setVisible(false);
             }
 
-            for (JComponent c : new JComponent[]{status_label, file_name_label, file_size_label}) {
+            for (final JComponent c : new JComponent[]{this.status_label, this.file_name_label, this.file_size_label}) {
 
                 c.setVisible(true);
             }
@@ -168,355 +161,366 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        status_label = new javax.swing.JLabel();
-        slots_label = new javax.swing.JLabel();
-        slots_spinner = new javax.swing.JSpinner();
-        speed_label = new javax.swing.JLabel();
-        progress_pbar = new javax.swing.JProgressBar();
-        pause_button = new javax.swing.JButton();
-        stop_button = new javax.swing.JButton();
-        keep_temp_checkbox = new javax.swing.JCheckBox();
-        file_name_label = new javax.swing.JLabel();
-        close_button = new javax.swing.JButton();
-        copy_link_button = new javax.swing.JButton();
-        restart_button = new javax.swing.JButton();
-        file_size_label = new javax.swing.JLabel();
-        open_folder_button = new javax.swing.JButton();
-        slot_status_label = new javax.swing.JLabel();
-        queue_up_button = new javax.swing.JButton();
-        queue_down_button = new javax.swing.JButton();
-        queue_top_button = new javax.swing.JButton();
-        queue_bottom_button = new javax.swing.JButton();
+        this.status_label = new javax.swing.JLabel();
+        this.slots_label = new javax.swing.JLabel();
+        this.slots_spinner = new javax.swing.JSpinner();
+        this.speed_label = new javax.swing.JLabel();
+        this.progress_pbar = new javax.swing.JProgressBar();
+        this.pause_button = new javax.swing.JButton();
+        this.stop_button = new javax.swing.JButton();
+        this.keep_temp_checkbox = new javax.swing.JCheckBox();
+        this.file_name_label = new javax.swing.JLabel();
+        this.close_button = new javax.swing.JButton();
+        this.copy_link_button = new javax.swing.JButton();
+        this.restart_button = new javax.swing.JButton();
+        this.file_size_label = new javax.swing.JLabel();
+        this.open_folder_button = new javax.swing.JButton();
+        this.slot_status_label = new javax.swing.JLabel();
+        this.queue_up_button = new javax.swing.JButton();
+        this.queue_down_button = new javax.swing.JButton();
+        this.queue_top_button = new javax.swing.JButton();
+        this.queue_bottom_button = new javax.swing.JButton();
 
-        setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 204, 255), 3, true));
+        this.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(153, 204, 255), 3, true));
 
-        status_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
-        status_label.setForeground(new java.awt.Color(102, 102, 102));
-        status_label.setText("status");
-        status_label.setDoubleBuffered(true);
+        this.status_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        this.status_label.setForeground(new java.awt.Color(102, 102, 102));
+        this.status_label.setText("status");
+        this.status_label.setDoubleBuffered(true);
 
-        slots_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        slots_label.setText("Slots");
-        slots_label.setDoubleBuffered(true);
+        this.slots_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.slots_label.setText("Slots");
+        this.slots_label.setDoubleBuffered(true);
 
-        slots_spinner.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        slots_spinner.setToolTipText("Slots");
-        slots_spinner.setDoubleBuffered(true);
-        slots_spinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                slots_spinnerStateChanged(evt);
+        this.slots_spinner.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        this.slots_spinner.setToolTipText("Slots");
+        this.slots_spinner.setDoubleBuffered(true);
+        this.slots_spinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
+            public void stateChanged(final javax.swing.event.ChangeEvent evt) {
+                DownloadView.this.slots_spinnerStateChanged(evt);
             }
         });
 
-        speed_label.setFont(new java.awt.Font("Dialog", 1, 26)); // NOI18N
-        speed_label.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        speed_label.setText("speed");
-        speed_label.setDoubleBuffered(true);
+        this.speed_label.setFont(new java.awt.Font("Dialog", 1, 26)); // NOI18N
+        this.speed_label.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        this.speed_label.setText("speed");
+        this.speed_label.setDoubleBuffered(true);
 
-        progress_pbar.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        progress_pbar.setDoubleBuffered(true);
+        this.progress_pbar.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.progress_pbar.setDoubleBuffered(true);
 
-        pause_button.setBackground(new java.awt.Color(255, 153, 0));
-        pause_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        pause_button.setForeground(java.awt.Color.white);
-        pause_button.setText("PAUSE DOWNLOAD");
-        pause_button.setDoubleBuffered(true);
-        pause_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pause_buttonActionPerformed(evt);
+        this.pause_button.setBackground(new java.awt.Color(255, 153, 0));
+        this.pause_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.pause_button.setForeground(java.awt.Color.white);
+        this.pause_button.setText("PAUSE DOWNLOAD");
+        this.pause_button.setDoubleBuffered(true);
+        this.pause_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.pause_buttonActionPerformed(evt);
             }
         });
 
-        stop_button.setBackground(new java.awt.Color(255, 0, 0));
-        stop_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        stop_button.setForeground(java.awt.Color.white);
-        stop_button.setText("CANCEL DOWNLOAD");
-        stop_button.setDoubleBuffered(true);
-        stop_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                stop_buttonActionPerformed(evt);
+        this.stop_button.setBackground(new java.awt.Color(255, 0, 0));
+        this.stop_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.stop_button.setForeground(java.awt.Color.white);
+        this.stop_button.setText("CANCEL DOWNLOAD");
+        this.stop_button.setDoubleBuffered(true);
+        this.stop_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.stop_buttonActionPerformed(evt);
             }
         });
 
-        keep_temp_checkbox.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        keep_temp_checkbox.setSelected(true);
-        keep_temp_checkbox.setText("Keep temp file");
-        keep_temp_checkbox.setDoubleBuffered(true);
+        this.keep_temp_checkbox.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.keep_temp_checkbox.setSelected(true);
+        this.keep_temp_checkbox.setText("Keep temp file");
+        this.keep_temp_checkbox.setDoubleBuffered(true);
 
-        file_name_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
-        file_name_label.setForeground(new java.awt.Color(0, 102, 153));
-        file_name_label.setText("---");
-        file_name_label.setDoubleBuffered(true);
+        this.file_name_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        this.file_name_label.setForeground(new java.awt.Color(0, 102, 153));
+        this.file_name_label.setText("---");
+        this.file_name_label.setDoubleBuffered(true);
 
-        close_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        close_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
-        close_button.setText("Close");
-        close_button.setDoubleBuffered(true);
-        close_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                close_buttonActionPerformed(evt);
+        this.close_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.close_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
+        this.close_button.setText("Close");
+        this.close_button.setDoubleBuffered(true);
+        this.close_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.close_buttonActionPerformed(evt);
             }
         });
 
-        copy_link_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        copy_link_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-copy-to-clipboard-30.png"))); // NOI18N
-        copy_link_button.setText("Copy link");
-        copy_link_button.setDoubleBuffered(true);
-        copy_link_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                copy_link_buttonActionPerformed(evt);
+        this.copy_link_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.copy_link_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-copy-to-clipboard-30.png"))); // NOI18N
+        this.copy_link_button.setText("Copy link");
+        this.copy_link_button.setDoubleBuffered(true);
+        this.copy_link_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.copy_link_buttonActionPerformed(evt);
             }
         });
 
-        restart_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        restart_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-restart-30.png"))); // NOI18N
-        restart_button.setText("Restart");
-        restart_button.setDoubleBuffered(true);
-        restart_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                restart_buttonActionPerformed(evt);
+        this.restart_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.restart_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-restart-30.png"))); // NOI18N
+        this.restart_button.setText("Restart");
+        this.restart_button.setDoubleBuffered(true);
+        this.restart_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.restart_buttonActionPerformed(evt);
             }
         });
 
-        file_size_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
-        file_size_label.setForeground(new java.awt.Color(0, 102, 153));
-        file_size_label.setText("---");
-        file_size_label.setDoubleBuffered(true);
+        this.file_size_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        this.file_size_label.setForeground(new java.awt.Color(0, 102, 153));
+        this.file_size_label.setText("---");
+        this.file_size_label.setDoubleBuffered(true);
 
-        open_folder_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        open_folder_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-folder-30.png"))); // NOI18N
-        open_folder_button.setText("Open folder");
-        open_folder_button.setDoubleBuffered(true);
-        open_folder_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                open_folder_buttonActionPerformed(evt);
+        this.open_folder_button.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.open_folder_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-folder-30.png"))); // NOI18N
+        this.open_folder_button.setText("Open folder");
+        this.open_folder_button.setDoubleBuffered(true);
+        this.open_folder_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.open_folder_buttonActionPerformed(evt);
             }
         });
 
-        slot_status_label.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        slot_status_label.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        slot_status_label.setDoubleBuffered(true);
+        this.slot_status_label.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.slot_status_label.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        this.slot_status_label.setDoubleBuffered(true);
 
-        queue_up_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        queue_up_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/arriba_1.png"))); // NOI18N
-        queue_up_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queue_up_buttonActionPerformed(evt);
+        this.queue_up_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.queue_up_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/arriba_1.png"))); // NOI18N
+        this.queue_up_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.queue_up_buttonActionPerformed(evt);
             }
         });
 
-        queue_down_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        queue_down_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/abajo_1.png"))); // NOI18N
-        queue_down_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queue_down_buttonActionPerformed(evt);
+        this.queue_down_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.queue_down_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/abajo_1.png"))); // NOI18N
+        this.queue_down_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.queue_down_buttonActionPerformed(evt);
             }
         });
 
-        queue_top_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        queue_top_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/arrow_up.png"))); // NOI18N
-        queue_top_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queue_top_buttonActionPerformed(evt);
+        this.queue_top_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        this.queue_top_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/arrow_up.png"))); // NOI18N
+        this.queue_top_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.queue_top_buttonActionPerformed(evt);
             }
         });
 
-        queue_bottom_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        queue_bottom_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/arrow_down.png"))); // NOI18N
-        queue_bottom_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                queue_bottom_buttonActionPerformed(evt);
+        this.queue_bottom_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        this.queue_bottom_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/arrow_down.png"))); // NOI18N
+        this.queue_bottom_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                DownloadView.this.queue_bottom_buttonActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(progress_pbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(slots_label))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(queue_top_button)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(queue_up_button)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(queue_down_button)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(queue_bottom_button)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slots_spinner, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(file_name_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(slot_status_label))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(file_size_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(6, 6, 6)
-                        .addComponent(open_folder_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(copy_link_button))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(speed_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(pause_button))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(close_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(restart_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 135, Short.MAX_VALUE)
-                        .addComponent(keep_temp_checkbox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(stop_button)))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(this.progress_pbar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(this.status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(this.slots_label))
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(this.queue_top_button)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(this.queue_up_button)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(this.queue_down_button)
+                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                                .addComponent(this.queue_bottom_button)
+                                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.slots_spinner, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.file_name_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.slot_status_label))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(this.file_size_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addGap(6, 6, 6)
+                                                .addComponent(this.open_folder_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.copy_link_button))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.speed_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(this.pause_button))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(this.close_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.restart_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 135, Short.MAX_VALUE)
+                                                .addComponent(this.keep_temp_checkbox)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.stop_button)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(queue_down_button)
-                    .addComponent(queue_up_button)
-                    .addComponent(queue_top_button)
-                    .addComponent(queue_bottom_button))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(slots_spinner, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(slots_label)
-                    .addComponent(status_label))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(file_name_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(copy_link_button, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(open_folder_button)
-                                .addComponent(file_size_label)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(progress_pbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(speed_label)
-                            .addComponent(pause_button))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(close_button)
-                                .addComponent(restart_button))
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(stop_button)
-                                .addComponent(keep_temp_checkbox))))
-                    .addComponent(slot_status_label))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(this.queue_down_button)
+                                        .addComponent(this.queue_up_button)
+                                        .addComponent(this.queue_top_button)
+                                        .addComponent(this.queue_bottom_button))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(this.slots_spinner, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(this.slots_label)
+                                        .addComponent(this.status_label))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.file_name_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(this.copy_link_button, javax.swing.GroupLayout.Alignment.TRAILING)
+                                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(this.open_folder_button)
+                                                                .addComponent(this.file_size_label)))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.progress_pbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(this.speed_label)
+                                                        .addComponent(this.pause_button))
+                                                .addGap(18, 18, 18)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(this.close_button)
+                                                                .addComponent(this.restart_button))
+                                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                                .addComponent(this.stop_button)
+                                                                .addComponent(this.keep_temp_checkbox))))
+                                        .addComponent(this.slot_status_label))
+                                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void slots_spinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_slots_spinnerStateChanged
+    private void slots_spinnerStateChanged(final javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_slots_spinnerStateChanged
 
         THREAD_POOL.execute(() -> {
-            if (_download.isUse_slots()) {
-                _download.checkSlotsAndWorkers();
+            if (this._download.isUse_slots()) {
+                this._download.checkSlotsAndWorkers();
             }
         });
     }//GEN-LAST:event_slots_spinnerStateChanged
 
-    private void close_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_close_buttonActionPerformed
+    private void close_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_close_buttonActionPerformed
 
-        _download.close();
+        this._download.close();
     }//GEN-LAST:event_close_buttonActionPerformed
 
-    private void copy_link_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copy_link_buttonActionPerformed
+    private void copy_link_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copy_link_buttonActionPerformed
 
-        copyTextToClipboard(_download.getUrl());
+        copyTextToClipboard(this._download.getUrl());
     }//GEN-LAST:event_copy_link_buttonActionPerformed
 
-    private void restart_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_restart_buttonActionPerformed
+    private void restart_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_restart_buttonActionPerformed
 
-        _download.restart();
+        this._download.restart();
 
     }//GEN-LAST:event_restart_buttonActionPerformed
 
-    private void stop_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stop_buttonActionPerformed
+    private void stop_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stop_buttonActionPerformed
 
-        _download.stop();
+        this._download.stop();
 
     }//GEN-LAST:event_stop_buttonActionPerformed
 
-    private void pause_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pause_buttonActionPerformed
+    private void pause_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pause_buttonActionPerformed
 
-        _download.pause();
+        this._download.pause();
     }//GEN-LAST:event_pause_buttonActionPerformed
 
-    private void open_folder_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_open_folder_buttonActionPerformed
+    private void open_folder_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_open_folder_buttonActionPerformed
 
         if (Desktop.isDesktopSupported()) {
             try {
-                Desktop.getDesktop().open(new File(_download.getDownload_path() + "/" + _download.getFile_name()).getParentFile());
-            } catch (Exception ex) {
+                Desktop.getDesktop().open(new File(this._download.getDownload_path() + "/" + this._download.getFile_name()).getParentFile());
+            } catch (final Exception ex) {
                 LOG.log(Level.INFO, ex.getMessage());
             }
         }
 
     }//GEN-LAST:event_open_folder_buttonActionPerformed
 
-    private void queue_up_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_up_buttonActionPerformed
+    private void queue_up_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_up_buttonActionPerformed
         // TODO add your handling code here:
 
-        queue_up_button.setEnabled(false);
+        this.queue_up_button.setEnabled(false);
 
         THREAD_POOL.execute(() -> {
-            _download.upWaitQueue();
+            this._download.upWaitQueue();
             MiscTools.GUIRunAndWait(() -> {
-                queue_up_button.setEnabled(true);
+                this.queue_up_button.setEnabled(true);
             });
         });
     }//GEN-LAST:event_queue_up_buttonActionPerformed
 
-    private void queue_down_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_down_buttonActionPerformed
+    private void queue_down_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_down_buttonActionPerformed
         // TODO add your handling code here:
 
-        queue_down_button.setEnabled(false);
+        this.queue_down_button.setEnabled(false);
 
         THREAD_POOL.execute(() -> {
-            _download.downWaitQueue();
+            this._download.downWaitQueue();
             MiscTools.GUIRunAndWait(() -> {
-                queue_down_button.setEnabled(true);
+                this.queue_down_button.setEnabled(true);
             });
         });
     }//GEN-LAST:event_queue_down_buttonActionPerformed
 
-    private void queue_top_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_top_buttonActionPerformed
+    private void queue_top_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_top_buttonActionPerformed
         // TODO add your handling code here:
 
-        queue_top_button.setEnabled(false);
+        this.queue_top_button.setEnabled(false);
 
         THREAD_POOL.execute(() -> {
-            _download.topWaitQueue();
+            this._download.topWaitQueue();
             MiscTools.GUIRunAndWait(() -> {
-                queue_top_button.setEnabled(true);
+                this.queue_top_button.setEnabled(true);
             });
         });
 
     }//GEN-LAST:event_queue_top_buttonActionPerformed
 
-    private void queue_bottom_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_bottom_buttonActionPerformed
+    private void queue_bottom_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_queue_bottom_buttonActionPerformed
         // TODO add your handling code here:
-        queue_bottom_button.setEnabled(false);
+        this.queue_bottom_button.setEnabled(false);
 
         THREAD_POOL.execute(() -> {
-            _download.bottomWaitQueue();
+            this._download.bottomWaitQueue();
             MiscTools.GUIRunAndWait(() -> {
-                queue_bottom_button.setEnabled(true);
+                this.queue_bottom_button.setEnabled(true);
             });
         });
     }//GEN-LAST:event_queue_bottom_buttonActionPerformed
@@ -524,15 +528,15 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     @Override
     public void pause() {
 
-        printStatusNormal("Pausing download ...");
+        this.printStatusNormal("Pausing download ...");
 
         MiscTools.GUIRunAndWait(() -> {
-            for (JComponent c : new JComponent[]{pause_button, speed_label, slots_label, slots_spinner, progress_pbar, file_name_label, file_size_label}) {
+            for (final JComponent c : new JComponent[]{this.pause_button, this.speed_label, this.slots_label, this.slots_spinner, this.progress_pbar, this.file_name_label, this.file_size_label}) {
 
                 c.setEnabled(false);
             }
 
-            for (JComponent c : new JComponent[]{stop_button, keep_temp_checkbox}) {
+            for (final JComponent c : new JComponent[]{this.stop_button, this.keep_temp_checkbox}) {
 
                 c.setVisible(true);
             }
@@ -542,32 +546,32 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     @Override
     public void resume() {
 
-        printStatusNormal("Downloading file from mega ...");
+        this.printStatusNormal("Downloading file from mega ...");
 
         MiscTools.GUIRunAndWait(() -> {
-            for (JComponent c : new JComponent[]{pause_button, speed_label, slots_label, slots_spinner, progress_pbar, file_name_label, file_size_label}) {
+            for (final JComponent c : new JComponent[]{this.pause_button, this.speed_label, this.slots_label, this.slots_spinner, this.progress_pbar, this.file_name_label, this.file_size_label}) {
 
                 c.setEnabled(true);
             }
 
-            for (JComponent c : new JComponent[]{stop_button, keep_temp_checkbox}) {
+            for (final JComponent c : new JComponent[]{this.stop_button, this.keep_temp_checkbox}) {
 
                 c.setVisible(false);
             }
 
-            pause_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE DOWNLOAD"));
-            _download.getMain_panel().getView().getPause_all_down_button().setVisible(true);
+            this.pause_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE DOWNLOAD"));
+            this._download.getMain_panel().getView().getPause_all_down_button().setVisible(true);
         });
 
     }
 
     @Override
-    public void stop(String status) {
+    public void stop(final String status) {
 
-        printStatusNormal(status);
+        this.printStatusNormal(status);
 
         MiscTools.GUIRunAndWait(() -> {
-            for (JComponent c : new JComponent[]{pause_button, keep_temp_checkbox, stop_button, speed_label, slots_label, slots_spinner, progress_pbar, file_name_label, file_size_label}) {
+            for (final JComponent c : new JComponent[]{this.pause_button, this.keep_temp_checkbox, this.stop_button, this.speed_label, this.slots_label, this.slots_spinner, this.progress_pbar, this.file_name_label, this.file_size_label}) {
 
                 c.setEnabled(false);
             }
@@ -580,11 +584,11 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
 
         MiscTools.GUIRunAndWait(() -> {
             if (speed != null) {
-                speed_label.setText(speed);
+                this.speed_label.setText(speed);
             }
 
             if (visible != null) {
-                speed_label.setVisible(visible);
+                this.speed_label.setVisible(visible);
             }
         });
     }
@@ -593,14 +597,14 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public void updateProgressBar(final long progress, final double bar_rate) {
 
         MiscTools.GUIRunAndWait(() -> {
-            progress_pbar.setValue((int) Math.floor(bar_rate * progress));
+            this.progress_pbar.setValue((int) Math.floor(bar_rate * progress));
         });
     }
 
     @Override
     public void updateProgressBar(final int value) {
         MiscTools.GUIRunAndWait(() -> {
-            progress_pbar.setValue(value);
+            this.progress_pbar.setValue(value);
         });
     }
 
@@ -608,8 +612,8 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public void printStatusError(final String message) {
 
         MiscTools.GUIRunAndWait(() -> {
-            status_label.setForeground(Color.red);
-            status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
+            this.status_label.setForeground(Color.red);
+            this.status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
         });
     }
 
@@ -617,8 +621,8 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public void printStatusOK(final String message) {
 
         MiscTools.GUIRunAndWait(() -> {
-            status_label.setForeground(new Color(0, 170, 0));
-            status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
+            this.status_label.setForeground(new Color(0, 170, 0));
+            this.status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
         });
     }
 
@@ -626,8 +630,8 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public void printStatusNormal(final String message) {
 
         MiscTools.GUIRunAndWait(() -> {
-            status_label.setForeground(new Color(102, 102, 102));
-            status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
+            this.status_label.setForeground(new Color(102, 102, 102));
+            this.status_label.setText(LabelTranslatorSingleton.getInstance().translate(message));
         });
 
     }
@@ -635,17 +639,17 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     @Override
     public void updateSlotsStatus() {
 
-        synchronized (_download.getWorkers_lock()) {
+        synchronized (this._download.getWorkers_lock()) {
 
             int conta_error = 0;
 
-            conta_error = _download.getChunkworkers().stream().filter((c) -> (c.isError_wait())).map((_item) -> 1).reduce(conta_error, Integer::sum);
+            conta_error = this._download.getChunkworkers().stream().filter((c) -> (c.isError_wait())).map((_item) -> 1).reduce(conta_error, Integer::sum);
 
             final String status = conta_error > 0 ? "(" + String.valueOf(conta_error) + ")" : "";
 
             MiscTools.GUIRun(() -> {
-                slot_status_label.setForeground(Color.RED);
-                slot_status_label.setText(status);
+                this.slot_status_label.setForeground(Color.RED);
+                this.slot_status_label.setText(status);
             });
         }
     }
@@ -653,10 +657,10 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     @Override
     public int getSlots() {
         try {
-            return (int) (MiscTools.futureRun((Callable) getSlots_spinner()::getValue).get());
-        } catch (InterruptedException ex) {
+            return (int) (MiscTools.futureRun((Callable) this.getSlots_spinner()::getValue).get());
+        } catch (final InterruptedException ex) {
             Logger.getLogger(DownloadView.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (final ExecutionException ex) {
             Logger.getLogger(DownloadView.class.getName()).log(Level.SEVERE, null, ex);
         }
         return 0;
@@ -665,10 +669,10 @@ public class DownloadView extends javax.swing.JPanel implements TransferenceView
     public boolean isKeepTempFileSelected() {
 
         try {
-            return (boolean) (MiscTools.futureRun((Callable) getKeep_temp_checkbox()::isSelected).get());
-        } catch (InterruptedException ex) {
+            return (boolean) (MiscTools.futureRun((Callable) this.getKeep_temp_checkbox()::isSelected).get());
+        } catch (final InterruptedException ex) {
             Logger.getLogger(DownloadView.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (ExecutionException ex) {
+        } catch (final ExecutionException ex) {
             Logger.getLogger(DownloadView.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;

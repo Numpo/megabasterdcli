@@ -9,13 +9,10 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
 import java.awt.event.KeyEvent;
 import java.util.logging.Logger;
 
 /**
- *
  * @author tonikelope
  */
 public class Get2FACode extends javax.swing.JDialog {
@@ -27,31 +24,31 @@ public class Get2FACode extends javax.swing.JDialog {
     private static final int MAX_CODE_LENGTH = 6;
 
     public boolean isCode_ok() {
-        return _code_ok;
+        return this._code_ok;
     }
 
     public String getPin_code() {
-        return _pin_code;
+        return this._pin_code;
     }
 
-    public Get2FACode(java.awt.Frame parent, boolean modal, String email, MainPanel main_panel) {
+    public Get2FACode(final java.awt.Frame parent, final boolean modal, final String email, final MainPanel main_panel) {
         super(parent, modal);
 
         MiscTools.GUIRunAndWait(() -> {
 
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
+//            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
 
-            translateLabels(this);
+//            translateLabels(this);
 
-            _code_ok = false;
+            this._code_ok = false;
 
             this.email_label.setText(email);
 
             this.ok_button.setEnabled(false);
 
-            pack();
+            this.pack();
 
         });
 
@@ -66,146 +63,153 @@ public class Get2FACode extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        cancel_button = new javax.swing.JButton();
-        ok_button = new javax.swing.JButton();
-        lock_label = new javax.swing.JLabel();
-        email_label = new javax.swing.JLabel();
-        status_label = new javax.swing.JLabel();
-        please_label = new javax.swing.JLabel();
-        current_code_textfield = new javax.swing.JTextField();
+        this.cancel_button = new javax.swing.JButton();
+        this.ok_button = new javax.swing.JButton();
+        this.lock_label = new javax.swing.JLabel();
+        this.email_label = new javax.swing.JLabel();
+        this.status_label = new javax.swing.JLabel();
+        this.please_label = new javax.swing.JLabel();
+        this.current_code_textfield = new javax.swing.JTextField();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("2FA CODE");
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        this.setTitle("2FA CODE");
 
-        cancel_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        cancel_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
-        cancel_button.setText("CANCEL");
-        cancel_button.setDoubleBuffered(true);
-        cancel_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancel_buttonActionPerformed(evt);
+        this.cancel_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.cancel_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
+        this.cancel_button.setText("CANCEL");
+        this.cancel_button.setDoubleBuffered(true);
+        this.cancel_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                Get2FACode.this.cancel_buttonActionPerformed(evt);
             }
         });
 
-        ok_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        ok_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-ok-30.png"))); // NOI18N
-        ok_button.setText("OK");
-        ok_button.setDoubleBuffered(true);
-        ok_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ok_buttonActionPerformed(evt);
+        this.ok_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.ok_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-ok-30.png"))); // NOI18N
+        this.ok_button.setText("OK");
+        this.ok_button.setDoubleBuffered(true);
+        this.ok_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                Get2FACode.this.ok_buttonActionPerformed(evt);
             }
         });
 
-        lock_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/lock_medium.png"))); // NOI18N
-        lock_label.setDoubleBuffered(true);
+        this.lock_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/lock_medium.png"))); // NOI18N
+        this.lock_label.setDoubleBuffered(true);
 
-        email_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        email_label.setForeground(new java.awt.Color(255, 102, 0));
-        email_label.setDoubleBuffered(true);
+        this.email_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        this.email_label.setForeground(new java.awt.Color(255, 102, 0));
+        this.email_label.setDoubleBuffered(true);
 
-        status_label.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        status_label.setDoubleBuffered(true);
+        this.status_label.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        this.status_label.setDoubleBuffered(true);
 
-        please_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        please_label.setText(LabelTranslatorSingleton.getInstance().translate("Please enter 2FA PIN CODE"));
-        please_label.setDoubleBuffered(true);
+        this.please_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        this.please_label.setText(LabelTranslatorSingleton.getInstance().translate("Please enter 2FA PIN CODE"));
+        this.please_label.setDoubleBuffered(true);
 
-        current_code_textfield.setBackground(new java.awt.Color(0, 153, 255));
-        current_code_textfield.setFont(new java.awt.Font("Dialog", 0, 24)); // NOI18N
-        current_code_textfield.setForeground(new java.awt.Color(255, 255, 255));
-        current_code_textfield.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        current_code_textfield.setDoubleBuffered(true);
-        current_code_textfield.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        current_code_textfield.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                current_code_textfieldKeyTyped(evt);
+        this.current_code_textfield.setBackground(new java.awt.Color(0, 153, 255));
+        this.current_code_textfield.setFont(new java.awt.Font("Dialog", 0, 24)); // NOI18N
+        this.current_code_textfield.setForeground(new java.awt.Color(255, 255, 255));
+        this.current_code_textfield.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        this.current_code_textfield.setDoubleBuffered(true);
+        this.current_code_textfield.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        this.current_code_textfield.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyTyped(final java.awt.event.KeyEvent evt) {
+                Get2FACode.this.current_code_textfieldKeyTyped(evt);
             }
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                current_code_textfieldKeyPressed(evt);
+
+            @Override
+            public void keyPressed(final java.awt.event.KeyEvent evt) {
+                Get2FACode.this.current_code_textfieldKeyPressed(evt);
             }
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                current_code_textfieldKeyReleased(evt);
+
+            @Override
+            public void keyReleased(final java.awt.event.KeyEvent evt) {
+                Get2FACode.this.current_code_textfieldKeyReleased(evt);
             }
         });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ok_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cancel_button))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lock_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(email_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(current_code_textfield)
-                            .addComponent(please_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.ok_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.cancel_button))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.lock_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(this.email_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                        .addComponent(this.current_code_textfield)
+                                                        .addComponent(this.please_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(email_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(please_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(current_code_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(lock_label))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(ok_button)
-                        .addComponent(cancel_button))
-                    .addComponent(status_label, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.email_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.please_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.current_code_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(this.lock_label))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(this.ok_button)
+                                                .addComponent(this.cancel_button))
+                                        .addComponent(this.status_label, javax.swing.GroupLayout.Alignment.TRAILING))
+                                .addContainerGap())
         );
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cancel_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancel_buttonActionPerformed
+    private void cancel_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancel_buttonActionPerformed
 
-        _code_ok = false;
+        this._code_ok = false;
 
-        setVisible(false);
+        this.setVisible(false);
     }//GEN-LAST:event_cancel_buttonActionPerformed
 
-    private void ok_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ok_buttonActionPerformed
+    private void ok_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ok_buttonActionPerformed
 
-        _code_ok = true;
+        this._code_ok = true;
 
-        _pin_code = current_code_textfield.getText();
+        this._pin_code = this.current_code_textfield.getText();
 
-        setVisible(false);
+        this.setVisible(false);
     }//GEN-LAST:event_ok_buttonActionPerformed
 
-    private void current_code_textfieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyPressed
+    private void current_code_textfieldKeyPressed(final java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyPressed
         if (evt.getKeyCode() == KeyEvent.VK_ENTER && this.ok_button.isEnabled()) {
-            ok_buttonActionPerformed(null);
+            this.ok_buttonActionPerformed(null);
         }
     }//GEN-LAST:event_current_code_textfieldKeyPressed
 
-    private void current_code_textfieldKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyTyped
+    private void current_code_textfieldKeyTyped(final java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyTyped
 
-        if (current_code_textfield.getText().length() == MAX_CODE_LENGTH || (!Character.isDigit(evt.getKeyChar()) && evt.getKeyCode() != KeyEvent.VK_BACK_SPACE && evt.getKeyCode() != KeyEvent.VK_DELETE)) {
+        if (this.current_code_textfield.getText().length() == MAX_CODE_LENGTH || (!Character.isDigit(evt.getKeyChar()) && evt.getKeyCode() != KeyEvent.VK_BACK_SPACE && evt.getKeyCode() != KeyEvent.VK_DELETE)) {
             evt.consume();
         }
     }//GEN-LAST:event_current_code_textfieldKeyTyped
 
-    private void current_code_textfieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyReleased
-        this.ok_button.setEnabled((current_code_textfield.getText().length() >= MAX_CODE_LENGTH));
+    private void current_code_textfieldKeyReleased(final java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_code_textfieldKeyReleased
+        this.ok_button.setEnabled((this.current_code_textfield.getText().length() >= MAX_CODE_LENGTH));
     }//GEN-LAST:event_current_code_textfieldKeyReleased
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

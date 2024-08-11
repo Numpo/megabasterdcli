@@ -9,11 +9,10 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.CryptTools.*;
-import static com.tonikelope.megabasterd.DBTools.*;
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Color;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -22,9 +21,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Long.valueOf;
-import static java.lang.Thread.sleep;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -38,19 +34,31 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import static java.util.concurrent.Executors.newCachedThreadPool;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.swing.JComponent;
+
+import static com.tonikelope.megabasterd.CryptTools.genCrypter;
+import static com.tonikelope.megabasterd.CryptTools.initMEGALinkKey;
+import static com.tonikelope.megabasterd.DBTools.deleteDownload;
+import static com.tonikelope.megabasterd.DBTools.insertDownload;
+import static com.tonikelope.megabasterd.DBTools.selectSettingValue;
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MiscTools.Bin2BASE64;
+import static com.tonikelope.megabasterd.MiscTools.UrlBASE642Bin;
+import static com.tonikelope.megabasterd.MiscTools.bin2i32a;
+import static com.tonikelope.megabasterd.MiscTools.checkMegaDownloadUrl;
+import static com.tonikelope.megabasterd.MiscTools.findFirstRegex;
+import static com.tonikelope.megabasterd.MiscTools.getWaitTimeExpBackOff;
+import static com.tonikelope.megabasterd.MiscTools.i32a2bin;
+import static com.tonikelope.megabasterd.MiscTools.truncateText;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Long.valueOf;
+import static java.lang.Thread.sleep;
+import static java.util.concurrent.Executors.newCachedThreadPool;
+import static java.util.logging.Level.SEVERE;
 
 /**
- *
  * @author tonikelope
  */
 public class Download implements Transference, Runnable, SecureSingleThreadNotifiable {
@@ -63,9 +71,9 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     public static final int CHUNK_SIZE_MULTI = 20;
     private static final Logger LOG = Logger.getLogger(Download.class.getName());
 
-    private final MainPanel _main_panel;
-    private volatile DownloadView _view;
-    private volatile ProgressMeter _progress_meter;
+    private MainPanel _main_panel;
+    private DownloadView _view;
+    private final ProgressMeter _progress_meter;
     private final Object _secure_notify_lock;
     private final Object _progress_lock;
     private final Object _workers_lock;
@@ -113,129 +121,175 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     private final boolean _priority;
     private volatile boolean global_cancel = false;
 
-    public void setGlobal_cancel(boolean global_cancel) {
+    public void setGlobal_cancel(final boolean global_cancel) {
         this.global_cancel = global_cancel;
     }
 
     public String getStatus_error() {
-        return _status_error;
+        return this._status_error;
     }
 
-    public Download(MainPanel main_panel, MegaAPI ma, String url, String download_path, String file_name, String file_key, Long file_size, String file_pass, String file_noexpire, boolean use_slots, boolean restart, String custom_chunks_dir, boolean priority) {
-
-        _priority = priority;
-        _paused_workers = 0;
-        _ma = ma;
-        _frozen = main_panel.isInit_paused();
-        _last_chunk_id_dispatched = 0L;
-        _canceled = false;
-        _auto_retry_on_error = true;
-        _status_error = null;
-        _retrying_request = false;
-        _checking_cbc = false;
-        _finalizing = false;
-        _closed = false;
-        _pause = false;
-        _exit = false;
-        _progress_watchdog_lock = new Object();
-        _last_download_url = null;
-        _provision_ok = false;
-        _progress = 0L;
-        _notified = false;
-        _main_panel = main_panel;
-        _url = url;
-        _download_path = download_path;
-        _file_name = file_name;
-        _file_key = file_key;
-        _file_size = file_size;
-        _file_pass = file_pass;
-        _file_noexpire = file_noexpire;
-        _use_slots = use_slots;
-        _restart = restart;
-        _secure_notify_lock = new Object();
-        _progress_lock = new Object();
-        _workers_lock = new Object();
-        _chunkid_lock = new Object();
-        _dl_url_lock = new Object();
-        _turbo_proxy_lock = new Object();
-        _chunkworkers = new ArrayList<>();
-        _partialProgressQueue = new ConcurrentLinkedQueue<>();
-        _rejectedChunkIds = new ConcurrentLinkedQueue<>();
-        _thread_pool = newCachedThreadPool();
-        _view = new DownloadView(this);
-        _progress_meter = new ProgressMeter(this);
-        _custom_chunks_dir = custom_chunks_dir;
-        _turbo = false;
+    public Download(final MegaAPI ma, final String url, final String download_path, final String file_name, final String file_key, final Long file_size, final String file_pass, final String file_noexpire, final boolean use_slots, final boolean restart, final String custom_chunks_dir, final boolean priority) {
+        this._priority = priority;
+        this._paused_workers = 0;
+        this._ma = ma;
+        this._last_chunk_id_dispatched = 0L;
+        this._canceled = false;
+        this._auto_retry_on_error = true;
+        this._status_error = null;
+        this._retrying_request = false;
+        this._checking_cbc = false;
+        this._finalizing = false;
+        this._closed = false;
+        this._pause = false;
+        this._exit = false;
+        this._progress_watchdog_lock = new Object();
+        this._last_download_url = null;
+        this._provision_ok = false;
+        this._progress = 0L;
+        this._notified = false;
+        this._url = url;
+        this._download_path = download_path;
+        this._file_name = file_name;
+        this._file_key = file_key;
+        this._file_size = file_size;
+        this._file_pass = file_pass;
+        this._file_noexpire = file_noexpire;
+        this._use_slots = use_slots;
+        this._restart = restart;
+        this._secure_notify_lock = new Object();
+        this._progress_lock = new Object();
+        this._workers_lock = new Object();
+        this._chunkid_lock = new Object();
+        this._dl_url_lock = new Object();
+        this._turbo_proxy_lock = new Object();
+        this._chunkworkers = new ArrayList<>();
+        this._partialProgressQueue = new ConcurrentLinkedQueue<>();
+        this._rejectedChunkIds = new ConcurrentLinkedQueue<>();
+        this._thread_pool = newCachedThreadPool();
+//        this._view = new DownloadView(this);
+        this._progress_meter = new ProgressMeter(this);
+        this._custom_chunks_dir = custom_chunks_dir;
+        this._turbo = false;
     }
 
-    public Download(Download download) {
+    public Download(final MainPanel main_panel, final MegaAPI ma, final String url, final String download_path, final String file_name, final String file_key, final Long file_size, final String file_pass, final String file_noexpire, final boolean use_slots, final boolean restart, final String custom_chunks_dir, final boolean priority) {
 
-        _priority = download.isPriority();
-        _paused_workers = 0;
-        _ma = download.getMa();
-        _last_chunk_id_dispatched = 0L;
-        _canceled = false;
-        _status_error = null;
-        _finalizing = false;
-        _retrying_request = false;
-        _auto_retry_on_error = true;
-        _closed = false;
-        _checking_cbc = false;
-        _pause = false;
-        _exit = false;
-        _progress_watchdog_lock = new Object();
-        _last_download_url = null;
-        _provision_ok = false;
-        _progress = 0L;
-        _notified = false;
-        _main_panel = download.getMain_panel();
-        _url = download.getUrl();
-        _download_path = download.getDownload_path();
-        _file_name = download.getFile_name();
-        _file_key = download.getFile_key();
-        _file_size = download.getFile_size();
-        _file_pass = download.getFile_pass();
-        _file_noexpire = download.getFile_noexpire();
-        _use_slots = download.getMain_panel().isUse_slots_down();
-        _restart = true;
-        _secure_notify_lock = new Object();
-        _progress_lock = new Object();
-        _workers_lock = new Object();
-        _chunkid_lock = new Object();
-        _dl_url_lock = new Object();
-        _turbo_proxy_lock = new Object();
-        _chunkworkers = new ArrayList<>();
-        _partialProgressQueue = new ConcurrentLinkedQueue<>();
-        _rejectedChunkIds = new ConcurrentLinkedQueue<>();
-        _thread_pool = newCachedThreadPool();
-        _view = new DownloadView(this);
-        _progress_meter = new ProgressMeter(this);
-        _custom_chunks_dir = download.getCustom_chunks_dir();
-        _turbo = false;
+        this._priority = priority;
+        this._paused_workers = 0;
+        this._ma = ma;
+        this._frozen = main_panel.isInit_paused();
+        this._last_chunk_id_dispatched = 0L;
+        this._canceled = false;
+        this._auto_retry_on_error = true;
+        this._status_error = null;
+        this._retrying_request = false;
+        this._checking_cbc = false;
+        this._finalizing = false;
+        this._closed = false;
+        this._pause = false;
+        this._exit = false;
+        this._progress_watchdog_lock = new Object();
+        this._last_download_url = null;
+        this._provision_ok = false;
+        this._progress = 0L;
+        this._notified = false;
+        this._main_panel = main_panel;
+        this._url = url;
+        this._download_path = download_path;
+        this._file_name = file_name;
+        this._file_key = file_key;
+        this._file_size = file_size;
+        this._file_pass = file_pass;
+        this._file_noexpire = file_noexpire;
+        this._use_slots = use_slots;
+        this._restart = restart;
+        this._secure_notify_lock = new Object();
+        this._progress_lock = new Object();
+        this._workers_lock = new Object();
+        this._chunkid_lock = new Object();
+        this._dl_url_lock = new Object();
+        this._turbo_proxy_lock = new Object();
+        this._chunkworkers = new ArrayList<>();
+        this._partialProgressQueue = new ConcurrentLinkedQueue<>();
+        this._rejectedChunkIds = new ConcurrentLinkedQueue<>();
+        this._thread_pool = newCachedThreadPool();
+        this._view = new DownloadView(this);
+        this._progress_meter = new ProgressMeter(this);
+        this._custom_chunks_dir = custom_chunks_dir;
+        this._turbo = false;
+    }
+
+    public Download(final Download download) {
+
+        this._priority = download.isPriority();
+        this._paused_workers = 0;
+        this._ma = download.getMa();
+        this._last_chunk_id_dispatched = 0L;
+        this._canceled = false;
+        this._status_error = null;
+        this._finalizing = false;
+        this._retrying_request = false;
+        this._auto_retry_on_error = true;
+        this._closed = false;
+        this._checking_cbc = false;
+        this._pause = false;
+        this._exit = false;
+        this._progress_watchdog_lock = new Object();
+        this._last_download_url = null;
+        this._provision_ok = false;
+        this._progress = 0L;
+        this._notified = false;
+        this._main_panel = download.getMain_panel();
+        this._url = download.getUrl();
+        this._download_path = download.getDownload_path();
+        this._file_name = download.getFile_name();
+        this._file_key = download.getFile_key();
+        this._file_size = download.getFile_size();
+        this._file_pass = download.getFile_pass();
+        this._file_noexpire = download.getFile_noexpire();
+        this._use_slots = download.getMain_panel().isUse_slots_down();
+        this._restart = true;
+        this._secure_notify_lock = new Object();
+        this._progress_lock = new Object();
+        this._workers_lock = new Object();
+        this._chunkid_lock = new Object();
+        this._dl_url_lock = new Object();
+        this._turbo_proxy_lock = new Object();
+        this._chunkworkers = new ArrayList<>();
+        this._partialProgressQueue = new ConcurrentLinkedQueue<>();
+        this._rejectedChunkIds = new ConcurrentLinkedQueue<>();
+        this._thread_pool = newCachedThreadPool();
+        this._view = new DownloadView(this);
+        this._progress_meter = new ProgressMeter(this);
+        this._custom_chunks_dir = download.getCustom_chunks_dir();
+        this._turbo = false;
 
     }
 
+    @Override
     public boolean isPriority() {
-        return _priority;
+        return this._priority;
     }
 
+    @Override
     public boolean isCanceled() {
-        return (_canceled && !global_cancel);
+        return (this._canceled && !this.global_cancel);
     }
 
     public boolean isTurbo() {
-        return _turbo;
+        return this._turbo;
     }
 
     public String getCustom_chunks_dir() {
-        return _custom_chunks_dir;
+        return this._custom_chunks_dir;
     }
 
     public long getLast_chunk_id_dispatched() {
-        return _last_chunk_id_dispatched;
+        return this._last_chunk_id_dispatched;
     }
 
-    public long calculateLastWrittenChunk(long temp_file_size) {
+    public long calculateLastWrittenChunk(final long temp_file_size) {
         if (temp_file_size > 3584 * 1024) {
             return 7 + (long) Math.floor((float) (temp_file_size - 3584 * 1024) / (1024 * 1024 * (this.isUse_slots() ? Download.CHUNK_SIZE_MULTI : 1)));
         } else {
@@ -251,53 +305,53 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     }
 
     public void disableTurboMode() {
-        synchronized (_turbo_proxy_lock) {
-            if (_turbo) {
-                _turbo = false;
-                MiscTools.GUIRun(() -> {
-
-                    getView().getSpeed_label().setForeground(new Color(0, 128, 255));
-
-                });
+        synchronized (this._turbo_proxy_lock) {
+            if (this._turbo) {
+                this._turbo = false;
+//                MiscTools.GUIRun(() -> {
+//
+//                    this.getView().getSpeed_label().setForeground(new Color(0, 128, 255));
+//
+//                });
             }
         }
     }
 
     public void enableTurboMode() {
 
-        synchronized (_turbo_proxy_lock) {
+        synchronized (this._turbo_proxy_lock) {
 
-            if (!_turbo) {
+            if (!this._turbo) {
 
-                _turbo = true;
+                this._turbo = true;
 
-                if (!_finalizing) {
-                    Download tthis = this;
+                if (!this._finalizing) {
+                    final Download tthis = this;
 
-                    MiscTools.GUIRun(() -> {
+//                    MiscTools.GUIRun(() -> {
+//
+//                        this.getView().getSpeed_label().setForeground(new Color(255, 102, 0));
+//
+//                    });
 
-                        getView().getSpeed_label().setForeground(new Color(255, 102, 0));
+                    synchronized (this._workers_lock) {
 
-                    });
+                        for (int t = this.getChunkworkers().size(); t <= Transference.MAX_WORKERS; t++) {
 
-                    synchronized (_workers_lock) {
+                            final ChunkDownloader c = new ChunkDownloader(t, tthis);
 
-                        for (int t = getChunkworkers().size(); t <= Transference.MAX_WORKERS; t++) {
+                            this._chunkworkers.add(c);
 
-                            ChunkDownloader c = new ChunkDownloader(t, tthis);
-
-                            _chunkworkers.add(c);
-
-                            _thread_pool.execute(c);
+                            this._thread_pool.execute(c);
                         }
 
                     }
 
-                    MiscTools.GUIRun(() -> {
-                        getView().getSlots_spinner().setValue(Transference.MAX_WORKERS);
-
-                        getView().getSlots_spinner().setEnabled(true);
-                    });
+//                    MiscTools.GUIRun(() -> {
+//                        this.getView().getSlots_spinner().setValue(Transference.MAX_WORKERS);
+//
+//                        this.getView().getSlots_spinner().setEnabled(true);
+//                    });
                 }
             }
 
@@ -306,123 +360,123 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     }
 
     public ConcurrentLinkedQueue<Long> getRejectedChunkIds() {
-        return _rejectedChunkIds;
+        return this._rejectedChunkIds;
     }
 
     public Object getWorkers_lock() {
-        return _workers_lock;
+        return this._workers_lock;
     }
 
     public boolean isChecking_cbc() {
-        return _checking_cbc;
+        return this._checking_cbc;
     }
 
     public boolean isRetrying_request() {
-        return _retrying_request;
+        return this._retrying_request;
     }
 
     public boolean isExit() {
-        return _exit;
+        return this._exit;
     }
 
     public boolean isPause() {
-        return _pause;
+        return this._pause;
     }
 
-    public void setExit(boolean exit) {
-        _exit = exit;
+    public void setExit(final boolean exit) {
+        this._exit = exit;
     }
 
-    public void setPause(boolean pause) {
-        _pause = pause;
+    public void setPause(final boolean pause) {
+        this._pause = pause;
     }
 
     public ChunkWriterManager getChunkmanager() {
-        return _chunkmanager;
+        return this._chunkmanager;
     }
 
     public String getFile_key() {
-        return _file_key;
+        return this._file_key;
     }
 
     @Override
     public long getProgress() {
-        return _progress;
+        return this._progress;
     }
 
     public OutputStream getOutput_stream() {
-        return _output_stream;
+        return this._output_stream;
     }
 
     public ArrayList<ChunkDownloader> getChunkworkers() {
 
-        synchronized (_workers_lock) {
-            return _chunkworkers;
+        synchronized (this._workers_lock) {
+            return this._chunkworkers;
         }
     }
 
-    public void setPaused_workers(int paused_workers) {
-        _paused_workers = paused_workers;
+    public void setPaused_workers(final int paused_workers) {
+        this._paused_workers = paused_workers;
     }
 
     public String getUrl() {
-        return _url;
+        return this._url;
     }
 
     public String getDownload_path() {
-        return _download_path;
+        return this._download_path;
     }
 
     @Override
     public String getFile_name() {
-        return _file_name;
+        return this._file_name;
     }
 
     public String getFile_pass() {
-        return _file_pass;
+        return this._file_pass;
     }
 
     public String getFile_noexpire() {
-        return _file_noexpire;
+        return this._file_noexpire;
     }
 
     public boolean isUse_slots() {
-        return _use_slots;
+        return this._use_slots;
     }
 
     public int getSlots() {
-        return _slots;
+        return this._slots;
     }
 
-    public void setLast_chunk_id_dispatched(long last_chunk_id_dispatched) {
-        _last_chunk_id_dispatched = last_chunk_id_dispatched;
+    public void setLast_chunk_id_dispatched(final long last_chunk_id_dispatched) {
+        this._last_chunk_id_dispatched = last_chunk_id_dispatched;
     }
 
     public boolean isProvision_ok() {
-        return _provision_ok;
+        return this._provision_ok;
     }
 
     @Override
     public ProgressMeter getProgress_meter() {
 
-        while (_progress_meter == null) {
+        while (this._progress_meter == null) {
             try {
                 Thread.sleep(250);
-            } catch (InterruptedException ex) {
+            } catch (final InterruptedException ex) {
                 LOG.log(Level.SEVERE, ex.getMessage());
             }
         }
 
-        return _progress_meter;
+        return this._progress_meter;
     }
 
     @Override
     public DownloadView getView() {
 
-        while (_view == null) {
+        while (this._view == null) {
             try {
                 Thread.sleep(250);
-            } catch (InterruptedException ex) {
+            } catch (final InterruptedException ex) {
                 LOG.log(Level.SEVERE, ex.getMessage());
             }
         }
@@ -432,7 +486,11 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     @Override
     public MainPanel getMain_panel() {
-        return _main_panel;
+        return this._main_panel;
+    }
+
+    public void set_main_panel(final MainPanel _main_panel) {
+        this._main_panel = _main_panel;
     }
 
     @Override
@@ -444,88 +502,88 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     @Override
     public void stop() {
 
-        if (!isExit()) {
-            _canceled = true;
-            stopDownloader();
+        if (!this.isExit()) {
+            this._canceled = true;
+            this.stopDownloader();
         }
     }
 
     @Override
     public void pause() {
 
-        if (isPause()) {
+        if (this.isPause()) {
 
-            setPause(false);
+            this.setPause(false);
 
-            setPaused_workers(0);
+            this.setPaused_workers(0);
 
-            synchronized (_workers_lock) {
+            synchronized (this._workers_lock) {
 
-                getChunkworkers().forEach((downloader) -> {
+                this.getChunkworkers().forEach((downloader) -> {
                     downloader.secureNotify();
                 });
             }
 
-            getView().resume();
+//            this.getView().resume();
 
-            _main_panel.getDownload_manager().setPaused_all(false);
+            this._main_panel.getDownload_manager().setPaused_all(false);
 
         } else {
 
-            setPause(true);
+            this.setPause(true);
 
-            getView().pause();
+//            this.getView().pause();
         }
 
-        _main_panel.getDownload_manager().secureNotify();
+        this._main_panel.getDownload_manager().secureNotify();
     }
 
     public MegaAPI getMa() {
-        return _ma;
+        return this._ma;
     }
 
     @Override
     public void restart() {
 
-        Download new_download = new Download(this);
+        final Download new_download = new Download(this);
 
-        getMain_panel().getDownload_manager().getTransference_remove_queue().add(this);
+        this.getMain_panel().getDownload_manager().getTransference_remove_queue().add(this);
 
-        getMain_panel().getDownload_manager().getTransference_provision_queue().add(new_download);
+        this.getMain_panel().getDownload_manager().getTransference_provision_queue().add(new_download);
 
-        getMain_panel().getDownload_manager().secureNotify();
+        this.getMain_panel().getDownload_manager().secureNotify();
     }
 
     @Override
     public boolean isPaused() {
-        return isPause();
+        return this.isPause();
     }
 
     @Override
     public boolean isStopped() {
-        return isExit();
+        return this.isExit();
     }
 
     @Override
     public void checkSlotsAndWorkers() {
 
-        if (!isExit() && !this._finalizing) {
+        if (!this.isExit() && !this._finalizing) {
 
-            synchronized (_workers_lock) {
+            synchronized (this._workers_lock) {
 
-                int sl = getView().getSlots();
+                final int sl = this.getSlots();
 
-                int cworkers = getChunkworkers().size();
+                final int cworkers = this.getChunkworkers().size();
 
                 if (sl != cworkers) {
 
                     if (sl > cworkers) {
 
-                        startSlot();
+                        this.startSlot();
 
                     } else {
 
-                        stopLastStartedSlot();
+                        this.stopLastStartedSlot();
                     }
                 }
             }
@@ -535,628 +593,632 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     @Override
     public void close() {
 
-        _closed = true;
+        this._closed = true;
 
-        if (_provision_ok) {
+        if (this._provision_ok) {
             try {
-                deleteDownload(_url);
-            } catch (SQLException ex) {
+                deleteDownload(this._url);
+            } catch (final SQLException ex) {
                 LOG.log(SEVERE, null, ex);
             }
         }
 
-        _main_panel.getDownload_manager().getTransference_remove_queue().add(this);
+        this._main_panel.getDownload_manager().getTransference_remove_queue().add(this);
 
-        _main_panel.getDownload_manager().secureNotify();
+        this._main_panel.getDownload_manager().secureNotify();
     }
 
     @Override
     public ConcurrentLinkedQueue<Long> getPartialProgress() {
-        return _partialProgressQueue;
+        return this._partialProgressQueue;
     }
 
     @Override
     public long getFile_size() {
-        return _file_size;
+        return this._file_size;
     }
 
     @Override
     public void run() {
 
-        MiscTools.GUIRun(() -> {
-            getView().getQueue_down_button().setVisible(false);
-            getView().getQueue_up_button().setVisible(false);
-            getView().getQueue_top_button().setVisible(false);
-            getView().getQueue_bottom_button().setVisible(false);
-            getView().getClose_button().setVisible(false);
-            getView().getCopy_link_button().setVisible(true);
-            getView().getOpen_folder_button().setVisible(true);
-        });
-
-        getView().printStatusNormal("Starting download, please wait...");
+//        MiscTools.GUIRun(() -> {
+//            this.getView().getQueue_down_button().setVisible(false);
+//            this.getView().getQueue_up_button().setVisible(false);
+//            this.getView().getQueue_top_button().setVisible(false);
+//            this.getView().getQueue_bottom_button().setVisible(false);
+//            this.getView().getClose_button().setVisible(false);
+//            this.getView().getCopy_link_button().setVisible(true);
+//            this.getView().getOpen_folder_button().setVisible(true);
+//        });
+//
+//        this.getView().printStatusNormal("Starting download, please wait...");
 
         try {
 
-            FileStore fs = Files.getFileStore(Paths.get(_download_path));
+            final FileStore fs = Files.getFileStore(Paths.get(this._download_path));
 
-            if (fs.getUsableSpace() < _file_size) {
-                _status_error = "NO DISK SPACE AVAILABLE!";
-                _exit = true;
+            if (fs.getUsableSpace() < this._file_size) {
+                this._status_error = "NO DISK SPACE AVAILABLE!";
+                this._exit = true;
             }
 
-            if (!_exit) {
+            if (!this._exit) {
 
-                String filename = _download_path + "/" + _file_name;
+                String filename = this._download_path + "/" + this._file_name;
 
-                _file = new File(filename);
+                this._file = new File(filename);
 
-                if (_file.getParent() != null) {
-                    File path = new File(_file.getParent());
+                if (this._file.getParent() != null) {
+                    final File path = new File(this._file.getParent());
 
                     path.mkdirs();
                 }
 
-                if (!_file.exists() || _file.length() != _file_size) {
+                if (!this._file.exists() || this._file.length() != this._file_size) {
 
-                    if (_file.exists()) {
-                        _file_name = _file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
+                    if (this._file.exists()) {
+                        this._file_name = this._file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
 
-                        filename = _download_path + "/" + _file_name;
+                        filename = this._download_path + "/" + this._file_name;
 
-                        _file = new File(filename);
+                        this._file = new File(filename);
                     }
 
-                    getView().printStatusNormal("Starting download (retrieving MEGA temp link), please wait...");
+                    LOG.info("Starting download (retrieving MEGA temp link), please wait...");
 
-                    _last_download_url = getMegaFileDownloadUrl(_url);
+                    this._last_download_url = this.getMegaFileDownloadUrl(this._url);
 
-                    if (!_exit) {
+                    if (!this._exit) {
 
-                        String temp_filename = (getCustom_chunks_dir() != null ? getCustom_chunks_dir() : _download_path) + "/" + _file_name + ".mctemp";
+                        final String temp_filename = (this.getCustom_chunks_dir() != null ? this.getCustom_chunks_dir() : this._download_path) + "/" + this._file_name + ".mctemp";
 
-                        _file = new File(temp_filename);
+                        this._file = new File(temp_filename);
 
-                        if (_file.getParent() != null) {
-                            File path = new File(_file.getParent());
+                        if (this._file.getParent() != null) {
+                            final File path = new File(this._file.getParent());
 
                             path.mkdirs();
                         }
 
-                        if (_file.exists()) {
-                            getView().printStatusNormal("File exists, resuming download...");
+                        if (this._file.exists()) {
+                            LOG.info("File exists, resuming download...");
 
-                            long max_size = calculateMaxTempFileSize(_file.length());
+                            final long max_size = this.calculateMaxTempFileSize(this._file.length());
 
-                            if (max_size != _file.length()) {
+                            if (max_size != this._file.length()) {
 
-                                LOG.log(Level.INFO, "{0} Downloader truncating mctemp file {1} -> {2} ", new Object[]{Thread.currentThread().getName(), _file.length(), max_size});
+                                LOG.log(Level.INFO, "{0} Downloader truncating mctemp file {1} -> {2} ", new Object[]{Thread.currentThread().getName(), this._file.length(), max_size});
 
-                                getView().printStatusNormal("Truncating temp file...");
+                                LOG.info("Truncating temp file...");
 
-                                try (FileChannel out_truncate = new FileOutputStream(temp_filename, true).getChannel()) {
+                                try (final FileChannel out_truncate = new FileOutputStream(temp_filename, true).getChannel()) {
                                     out_truncate.truncate(max_size);
                                 }
                             }
 
-                            setProgress(_file.length());
+                            this.setProgress(this._file.length());
 
-                            _last_chunk_id_dispatched = calculateLastWrittenChunk(_progress);
+                            this._last_chunk_id_dispatched = this.calculateLastWrittenChunk(this._progress);
 
                         } else {
-                            setProgress(0);
+                            this.setProgress(0);
                         }
 
-                        _output_stream = new BufferedOutputStream(new FileOutputStream(_file, (_progress > 0)));
+                        this._output_stream = new BufferedOutputStream(new FileOutputStream(this._file, (this._progress > 0)));
 
-                        _thread_pool.execute(getProgress_meter());
+                        this._thread_pool.execute(this.getProgress_meter());
 
-                        getMain_panel().getGlobal_dl_speed().attachTransference(this);
+                        this.getMain_panel().getGlobal_dl_speed().attachTransference(this);
 
-                        synchronized (_workers_lock) {
+                        synchronized (this._workers_lock) {
 
-                            if (_use_slots) {
+                            if (this._use_slots) {
 
-                                _chunkmanager = new ChunkWriterManager(this);
+                                this._chunkmanager = new ChunkWriterManager(this);
 
-                                _thread_pool.execute(_chunkmanager);
+                                this._thread_pool.execute(this._chunkmanager);
 
-                                _slots = getMain_panel().getDefault_slots_down();
+                                this._slots = this.getMain_panel().getDefault_slots_down();
 
-                                _view.getSlots_spinner().setValue(_slots);
+//                                this._view.getSlots_spinner().setValue(this._slots);
 
-                                for (int t = 1; t <= _slots; t++) {
-                                    ChunkDownloader c = new ChunkDownloader(t, this);
+                                for (int t = 1; t <= this._slots; t++) {
+                                    final ChunkDownloader c = new ChunkDownloader(t, this);
 
-                                    _chunkworkers.add(c);
+                                    this._chunkworkers.add(c);
 
-                                    _thread_pool.execute(c);
+                                    this._thread_pool.execute(c);
                                 }
 
-                                MiscTools.GUIRun(() -> {
-                                    for (JComponent c : new JComponent[]{getView().getSlots_label(), getView().getSlots_spinner(), getView().getSlot_status_label()}) {
-
-                                        c.setVisible(true);
-                                    }
-                                });
+//                                MiscTools.GUIRun(() -> {
+//                                    for (final JComponent c : new JComponent[]{this.getView().getSlots_label(), this.getView().getSlots_spinner(), this.getView().getSlot_status_label()}) {
+//
+//                                        c.setVisible(true);
+//                                    }
+//                                });
 
                             } else {
 
-                                ChunkDownloaderMono c = new ChunkDownloaderMono(this);
+                                final ChunkDownloaderMono c = new ChunkDownloaderMono(this);
 
-                                _chunkworkers.add(c);
+                                this._chunkworkers.add(c);
 
-                                _thread_pool.execute(c);
+                                this._thread_pool.execute(c);
 
-                                MiscTools.GUIRun(() -> {
-                                    for (JComponent c1 : new JComponent[]{getView().getSlots_label(), getView().getSlots_spinner(), getView().getSlot_status_label()}) {
-                                        c1.setVisible(false);
-                                    }
-                                });
+//                                MiscTools.GUIRun(() -> {
+//                                    for (final JComponent c1 : new JComponent[]{this.getView().getSlots_label(), this.getView().getSlots_spinner(), this.getView().getSlot_status_label()}) {
+//                                        c1.setVisible(false);
+//                                    }
+//                                });
                             }
                         }
 
-                        getView().printStatusNormal(LabelTranslatorSingleton.getInstance().translate("Downloading file from mega ") + (_ma.getFull_email() != null ? "(" + _ma.getFull_email() + ")" : "") + " ...");
+                        LOG.info("Downloading file from mega " + (this._ma.getFull_email() != null ? "(" + this._ma.getFull_email() + ")" : "") + " ...");
 
-                        MiscTools.GUIRun(() -> {
-                            for (JComponent c : new JComponent[]{getView().getPause_button(), getView().getProgress_pbar()}) {
-
-                                c.setVisible(true);
-                            }
-                        });
+//                        MiscTools.GUIRun(() -> {
+//                            for (final JComponent c : new JComponent[]{this.getView().getPause_button(), this.getView().getProgress_pbar()}) {
+//
+//                                c.setVisible(true);
+//                            }
+//                        });
 
                         THREAD_POOL.execute(() -> {
 
                             //PROGRESS WATCHDOG If a download remains more than PROGRESS_WATCHDOG_TIMEOUT seconds without receiving data, we force fatal error in order to restart it.
                             LOG.log(Level.INFO, "{0} PROGRESS WATCHDOG HELLO!", Thread.currentThread().getName());
 
-                            long last_progress, progress = getProgress();
+                            long last_progress, progress = this.getProgress();
 
                             do {
                                 last_progress = progress;
 
-                                synchronized (_progress_watchdog_lock) {
+                                synchronized (this._progress_watchdog_lock) {
                                     try {
-                                        _progress_watchdog_lock.wait(PROGRESS_WATCHDOG_TIMEOUT * 1000);
-                                        progress = getProgress();
-                                    } catch (InterruptedException ex) {
+                                        this._progress_watchdog_lock.wait(PROGRESS_WATCHDOG_TIMEOUT * 1000);
+                                        progress = this.getProgress();
+                                    } catch (final InterruptedException ex) {
                                         progress = -1;
                                         Logger.getLogger(Download.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                 }
 
-                            } while (!isExit() && !_thread_pool.isShutdown() && progress < getFile_size() && (isPaused() || progress > last_progress));
+                            } while (!this.isExit() && !this._thread_pool.isShutdown() && progress < this.getFile_size() && (this.isPaused() || progress > last_progress));
 
-                            if (!isExit() && !_thread_pool.isShutdown() && _status_error == null && progress < getFile_size() && progress <= last_progress) {
-                                stopDownloader("PROGRESS WATCHDOG TIMEOUT!");
+                            if (!this.isExit() && !this._thread_pool.isShutdown() && this._status_error == null && progress < this.getFile_size() && progress <= last_progress) {
+                                this.stopDownloader("PROGRESS WATCHDOG TIMEOUT!");
                             }
 
                             LOG.log(Level.INFO, "{0} PROGRESS WATCHDOG BYE BYE!", Thread.currentThread().getName());
 
                         });
 
-                        secureWait();
+                        this.secureWait();
 
                         LOG.log(Level.INFO, "{0} Chunkdownloaders finished!", Thread.currentThread().getName());
 
-                        getProgress_meter().setExit(true);
+                        this.getProgress_meter().setExit(true);
 
-                        getProgress_meter().secureNotify();
+                        this.getProgress_meter().secureNotify();
 
                         try {
 
-                            _thread_pool.shutdown();
+                            this._thread_pool.shutdown();
 
                             LOG.log(Level.INFO, "{0} Waiting all threads to finish...", Thread.currentThread().getName());
 
-                            _thread_pool.awaitTermination(MAX_WAIT_WORKERS_SHUTDOWN, TimeUnit.SECONDS);
+                            this._thread_pool.awaitTermination(MAX_WAIT_WORKERS_SHUTDOWN, TimeUnit.SECONDS);
 
-                        } catch (InterruptedException ex) {
+                        } catch (final InterruptedException ex) {
                             LOG.log(Level.SEVERE, ex.getMessage());
                         }
 
-                        if (!_thread_pool.isTerminated()) {
+                        if (!this._thread_pool.isTerminated()) {
 
                             LOG.log(Level.INFO, "{0} Closing thread pool ''mecag\u00fcen'' style...", Thread.currentThread().getName());
 
-                            _thread_pool.shutdownNow();
+                            this._thread_pool.shutdownNow();
                         }
 
                         LOG.log(Level.INFO, "{0} Downloader thread pool finished!", Thread.currentThread().getName());
 
-                        getMain_panel().getGlobal_dl_speed().detachTransference(this);
+                        this.getMain_panel().getGlobal_dl_speed().detachTransference(this);
 
-                        _output_stream.close();
+                        this._output_stream.close();
 
-                        MiscTools.GUIRun(() -> {
-                            for (JComponent c : new JComponent[]{getView().getSpeed_label(), getView().getPause_button(), getView().getStop_button(), getView().getSlots_label(), getView().getSlots_spinner(), getView().getKeep_temp_checkbox()}) {
+//                        MiscTools.GUIRun(() -> {
+//                            for (final JComponent c : new JComponent[]{this.getView().getSpeed_label(), this.getView().getPause_button(), this.getView().getStop_button(), this.getView().getSlots_label(), this.getView().getSlots_spinner(), this.getView().getKeep_temp_checkbox()}) {
+//
+//                                c.setVisible(false);
+//                            }
+//                        });
 
-                                c.setVisible(false);
-                            }
-                        });
+                        if (this._progress == this._file_size) {
 
-                        if (_progress == _file_size) {
-
-                            if (_file.length() != _file_size) {
+                            if (this._file.length() != this._file_size) {
 
                                 throw new IOException("El tamaño del fichero es incorrecto!");
                             }
 
-                            Files.move(Paths.get(_file.getAbsolutePath()), Paths.get(filename), StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(Paths.get(this._file.getAbsolutePath()), Paths.get(filename), StandardCopyOption.REPLACE_EXISTING);
 
-                            if (_custom_chunks_dir != null) {
+                            if (this._custom_chunks_dir != null) {
 
                                 File temp_parent_download_dir = new File(temp_filename).getParentFile();
 
-                                while (!temp_parent_download_dir.getAbsolutePath().equals(_custom_chunks_dir) && temp_parent_download_dir.listFiles().length == 0) {
+                                while (!temp_parent_download_dir.getAbsolutePath().equals(this._custom_chunks_dir) && temp_parent_download_dir.listFiles().length == 0) {
                                     temp_parent_download_dir.delete();
                                     temp_parent_download_dir = temp_parent_download_dir.getParentFile();
                                 }
 
                             }
 
-                            String verify_file = selectSettingValue("verify_down_file");
+                            final String verify_file = selectSettingValue("verify_down_file");
 
                             if (verify_file != null && verify_file.equals("yes")) {
-                                _checking_cbc = true;
+                                this._checking_cbc = true;
 
-                                getView().printStatusNormal("Waiting to check file integrity...");
+                                LOG.info("Waiting to check file integrity...");
 
-                                setProgress(0);
+                                this.setProgress(0);
 
-                                getView().printStatusNormal("Checking file integrity, please wait...");
+                                LOG.info("Checking file integrity, please wait...");
 
-                                MiscTools.GUIRun(() -> {
-                                    getView().getStop_button().setVisible(true);
+//                                MiscTools.GUIRun(() -> {
+//                                    this.getView().getStop_button().setVisible(true);
+//
+//                                    this.getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL CHECK"));
+//                                });
 
-                                    getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL CHECK"));
-                                });
+                                this.getMain_panel().getDownload_manager().getTransference_running_list().remove(this);
 
-                                getMain_panel().getDownload_manager().getTransference_running_list().remove(this);
+                                this.getMain_panel().getDownload_manager().secureNotify();
 
-                                getMain_panel().getDownload_manager().secureNotify();
+                                if (this.verifyFileCBCMAC(filename)) {
 
-                                if (verifyFileCBCMAC(filename)) {
+                                    LOG.info("File successfully downloaded! (Integrity check PASSED)");
 
-                                    getView().printStatusOK("File successfully downloaded! (Integrity check PASSED)");
+                                } else if (!this._exit) {
 
-                                } else if (!_exit) {
+                                    this._status_error = "BAD NEWS :( File is DAMAGED!";
 
-                                    _status_error = "BAD NEWS :( File is DAMAGED!";
-
-                                    getView().printStatusError(_status_error);
+                                    LOG.info(this._status_error);
 
                                 } else {
 
-                                    getView().printStatusOK("File successfully downloaded! (but integrity check CANCELED)");
+                                    LOG.info("File successfully downloaded! (but integrity check CANCELED)");
 
                                 }
 
-                                MiscTools.GUIRun(() -> {
-                                    getView().getStop_button().setVisible(false);
-                                });
+//                                MiscTools.GUIRun(() -> {
+//                                    this.getView().getStop_button().setVisible(false);
+//                                });
 
                             } else {
 
-                                getView().printStatusOK("File successfully downloaded!");
+                                LOG.info("File successfully downloaded!");
 
                             }
 
-                        } else if (_status_error != null) {
+                        } else if (this._status_error != null) {
 
-                            getView().hideAllExceptStatus();
+//                            this.getView().hideAllExceptStatus();
 
-                            getView().printStatusError(_status_error);
+                            LOG.info(this._status_error);
 
-                        } else if (_canceled) {
+                        } else if (this._canceled) {
 
-                            getView().hideAllExceptStatus();
+//                            this.getView().hideAllExceptStatus();
 
-                            getView().printStatusNormal("Download CANCELED!");
+                            LOG.info("Download CANCELED!");
 
                         } else {
 
-                            getView().hideAllExceptStatus();
+//                            this.getView().hideAllExceptStatus();
 
-                            _status_error = "UNEXPECTED ERROR!";
+                            this._status_error = "UNEXPECTED ERROR!";
 
-                            getView().printStatusError(_status_error);
+                            LOG.info(this._status_error);
                         }
 
-                    } else if (_status_error != null) {
+                    } else if (this._status_error != null) {
 
-                        getView().hideAllExceptStatus();
+//                        this.getView().hideAllExceptStatus();
 
-                        getView().printStatusError(_status_error != null ? _status_error : "ERROR");
+                        LOG.info(this._status_error != null ? this._status_error : "ERROR");
 
-                    } else if (_canceled) {
+                    } else if (this._canceled) {
 
-                        getView().hideAllExceptStatus();
+//                        this.getView().hideAllExceptStatus();
 
-                        getView().printStatusNormal("Download CANCELED!");
+                        LOG.info("Download CANCELED!");
 
                     } else {
 
-                        getView().hideAllExceptStatus();
+//                        this.getView().hideAllExceptStatus();
 
-                        _status_error = "UNEXPECTED ERROR!";
+                        this._status_error = "UNEXPECTED ERROR!";
 
-                        getView().printStatusError(_status_error);
+                        LOG.info(this._status_error);
                     }
 
                 } else {
-                    getView().hideAllExceptStatus();
+//                    this.getView().hideAllExceptStatus();
 
-                    _status_error = "FILE WITH SAME NAME AND SIZE ALREADY EXISTS";
+                    this._status_error = "FILE WITH SAME NAME AND SIZE ALREADY EXISTS";
 
-                    _auto_retry_on_error = false;
+                    this._auto_retry_on_error = false;
 
-                    getView().printStatusError(_status_error);
+                    LOG.info(this._status_error);
                 }
 
-            } else if (_status_error != null) {
+            } else if (this._status_error != null) {
 
-                getView().hideAllExceptStatus();
+//                this.getView().hideAllExceptStatus();
 
-                getView().printStatusError(_status_error);
+                LOG.info(this._status_error);
 
-            } else if (_canceled) {
+            } else if (this._canceled) {
 
-                getView().hideAllExceptStatus();
+//                this.getView().hideAllExceptStatus();
 
-                getView().printStatusNormal("Download CANCELED!");
+                LOG.info("Download CANCELED!");
 
             } else {
 
-                getView().hideAllExceptStatus();
+//                this.getView().hideAllExceptStatus();
 
-                _status_error = "UNEXPECTED ERROR!";
+                this._status_error = "UNEXPECTED ERROR!";
 
-                getView().printStatusError(_status_error);
+                LOG.info(this._status_error);
             }
 
-        } catch (Exception ex) {
-            _status_error = "I/O ERROR " + ex.getMessage();
+        } catch (final Exception ex) {
+            this._status_error = "I/O ERROR " + ex.getMessage();
 
-            getView().printStatusError(_status_error);
+            LOG.info(this._status_error);
 
             LOG.log(Level.SEVERE, ex.getMessage());
         }
 
-        if (_file != null && !getView().isKeepTempFileSelected()) {
-            _file.delete();
+        if (this._file != null) {
+            this._file.delete();
 
-            if (getChunkmanager() != null) {
+            if (this.getChunkmanager() != null) {
 
-                getChunkmanager().delete_chunks_temp_dir();
+                this.getChunkmanager().delete_chunks_temp_dir();
 
-                File parent_download_dir = new File(getDownload_path() + "/" + getFile_name()).getParentFile();
+                File parent_download_dir = new File(this.getDownload_path() + "/" + this.getFile_name()).getParentFile();
 
-                while (!parent_download_dir.getAbsolutePath().equals(getDownload_path()) && parent_download_dir.listFiles().length == 0) {
+                while (!parent_download_dir.getAbsolutePath().equals(this.getDownload_path()) && parent_download_dir.listFiles().length == 0) {
                     parent_download_dir.delete();
                     parent_download_dir = parent_download_dir.getParentFile();
                 }
 
-                if (!(new File(getDownload_path() + "/" + getFile_name()).getParentFile().exists())) {
+                if (!(new File(this.getDownload_path() + "/" + this.getFile_name()).getParentFile().exists())) {
 
-                    getView().getOpen_folder_button().setEnabled(false);
+//                    this.getView().getOpen_folder_button().setEnabled(false);
                 }
             }
         }
 
-        if ((_status_error == null && !_canceled) || global_cancel || !_auto_retry_on_error) {
+        if ((this._status_error == null && !this._canceled) || this.global_cancel || !this._auto_retry_on_error) {
 
             try {
-                deleteDownload(_url);
-            } catch (SQLException ex) {
+                deleteDownload(this._url);
+            } catch (final SQLException ex) {
                 LOG.log(SEVERE, null, ex);
             }
 
         }
 
-        getMain_panel().getDownload_manager().getTransference_running_list().remove(this);
+        this.getMain_panel().getDownload_manager().getTransference_running_list().remove(this);
 
-        getMain_panel().getDownload_manager().getTransference_finished_queue().add(this);
+        this.getMain_panel().getDownload_manager().getTransference_finished_queue().add(this);
 
-        MiscTools.GUIRun(() -> {
-            getMain_panel().getDownload_manager().getScroll_panel().remove(getView());
+//        MiscTools.GUIRun(() -> {
+//            this.getMain_panel().getDownload_manager().getScroll_panel().remove(this.getView());
+//
+//            this.getMain_panel().getDownload_manager().getScroll_panel().add(this.getView());
+//        });
 
-            getMain_panel().getDownload_manager().getScroll_panel().add(getView());
-        });
+        this.getMain_panel().getDownload_manager().secureNotify();
 
-        getMain_panel().getDownload_manager().secureNotify();
+//        MiscTools.GUIRun(() -> {
+//            this.getView().getClose_button().setVisible(true);
+//
+//            if ((this._status_error != null || this._canceled) && this.isProvision_ok() && !this.global_cancel) {
+//
+//                this.getView().getRestart_button().setVisible(true);
+//
+//            } else if (!this.global_cancel) {
+//
+//                this.getView().getClose_button().setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-ok-30.png")));
+//            }
+//        });
 
-        MiscTools.GUIRun(() -> {
-            getView().getClose_button().setVisible(true);
-
-            if ((_status_error != null || _canceled) && isProvision_ok() && !global_cancel) {
-
-                getView().getRestart_button().setVisible(true);
-
-            } else if (!global_cancel) {
-
-                getView().getClose_button().setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-ok-30.png")));
-            }
-        });
-
-        if (_status_error != null && !_canceled && _auto_retry_on_error) {
+        if (this._status_error != null && !this._canceled && this._auto_retry_on_error) {
             THREAD_POOL.execute(() -> {
-                for (int i = 3; !_closed && i > 0; i--) {
+                for (int i = 3; !this._closed && i > 0; i--) {
                     final int j = i;
-                    MiscTools.GUIRun(() -> {
-                        getView().getRestart_button().setText("Restart (" + String.valueOf(j) + " secs...)");
-                    });
+                    LOG.info("Restart (" + String.valueOf(j) + " secs...)");
+//                    MiscTools.GUIRun(() -> {
+//                        this.getView().getRestart_button().setText("Restart (" + String.valueOf(j) + " secs...)");
+//                    });
                     try {
                         Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
+                    } catch (final InterruptedException ex) {
                         Logger.getLogger(Upload.class.getName()).log(Level.SEVERE, ex.getMessage());
                     }
                 }
-                if (!_closed) {
-                    LOG.log(Level.INFO, "{0} Downloader {1} AUTO RESTARTING DOWNLOAD...", new Object[]{Thread.currentThread().getName(), getFile_name()});
-                    restart();
+                if (!this._closed) {
+                    LOG.log(Level.INFO, "{0} Downloader {1} AUTO RESTARTING DOWNLOAD...", new Object[]{Thread.currentThread().getName(), this.getFile_name()});
+                    this.restart();
                 }
             });
         } else {
-            getMain_panel().getDownload_manager().setAll_finished(false);
+            this.getMain_panel().getDownload_manager().setAll_finished(false);
         }
 
-        _exit = true;
+        this._exit = true;
 
-        if (_status_error != null && !_canceled && getMain_panel().getDownload_manager().no_transferences() && getMain_panel().getUpload_manager().no_transferences() && (!getMain_panel().getDownload_manager().getTransference_finished_queue().isEmpty() || !getMain_panel().getUpload_manager().getTransference_finished_queue().isEmpty()) && getMain_panel().getView().getAuto_close_menu().isSelected()) {
+        if (this._status_error != null && !this._canceled && this.getMain_panel().getDownload_manager().no_transferences() && this.getMain_panel().getUpload_manager().no_transferences() && (!this.getMain_panel().getDownload_manager().getTransference_finished_queue().isEmpty() || !this.getMain_panel().getUpload_manager().getTransference_finished_queue().isEmpty())) {
             System.exit(0);
         }
 
-        synchronized (_progress_watchdog_lock) {
-            _progress_watchdog_lock.notifyAll();
+        synchronized (this._progress_watchdog_lock) {
+            this._progress_watchdog_lock.notifyAll();
         }
 
-        LOG.log(Level.INFO, "{0}{1} Downloader: bye bye", new Object[]{Thread.currentThread().getName(), _file_name});
+        LOG.log(Level.INFO, "{0}{1} Downloader: bye bye", new Object[]{Thread.currentThread().getName(), this._file_name});
+
+        LOG.info("EXITING");
+        System.exit(0);
     }
 
-    public void provisionIt(boolean retry) throws APIException {
+    public void provisionIt(final boolean retry) throws APIException {
 
-        getView().printStatusNormal("Provisioning download, please wait...");
+//        this.getView().printStatusNormal("Provisioning download, please wait...");
 
-        MiscTools.GUIRun(() -> {
-            getView().getCopy_link_button().setVisible(true);
-            getView().getOpen_folder_button().setVisible(true);
-        });
+//        MiscTools.GUIRun(() -> {
+//            this.getView().getCopy_link_button().setVisible(true);
+//            this.getView().getOpen_folder_button().setVisible(true);
+//        });
 
-        String[] file_info;
+        final String[] file_info;
 
-        _provision_ok = false;
+        this._provision_ok = false;
 
         try {
-            if (_file_name == null) {
+            if (this._file_name == null) {
 
                 //New single file links
-                file_info = getMegaFileMetadata(_url, getMain_panel().getView(), retry);
+                file_info = this.getMegaFileMetadata(this._url, null, retry);
 
                 if (file_info != null) {
 
-                    _file_name = file_info[0];
+                    this._file_name = file_info[0];
 
-                    _file_size = valueOf(file_info[1]);
+                    this._file_size = valueOf(file_info[1]);
 
-                    _file_key = file_info[2];
+                    this._file_key = file_info[2];
 
                     if (file_info.length == 5) {
 
-                        _file_pass = file_info[3];
+                        this._file_pass = file_info[3];
 
-                        _file_noexpire = file_info[4];
+                        this._file_noexpire = file_info[4];
                     }
 
-                    String filename = _download_path + "/" + _file_name;
+                    final String filename = this._download_path + "/" + this._file_name;
 
-                    File file = new File(filename);
+                    final File file = new File(filename);
 
-                    if (file.exists() && file.length() != _file_size) {
-                        _file_name = _file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
+                    if (file.exists() && file.length() != this._file_size) {
+                        this._file_name = this._file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
                     }
 
                     try {
 
-                        insertDownload(_url, _ma.getFull_email(), _download_path, _file_name, _file_key, _file_size, _file_pass, _file_noexpire, _custom_chunks_dir);
+                        insertDownload(this._url, this._ma.getFull_email(), this._download_path, this._file_name, this._file_key, this._file_size, this._file_pass, this._file_noexpire, this._custom_chunks_dir);
 
-                        _provision_ok = true;
+                        this._provision_ok = true;
 
-                    } catch (SQLException ex) {
+                    } catch (final SQLException ex) {
 
-                        _status_error = "Error registering download: " + ex.getMessage() + " file is already downloading?";
+                        this._status_error = "Error registering download: " + ex.getMessage() + " file is already downloading?";
                     }
 
                 }
             } else {
 
-                String filename = _download_path + "/" + _file_name;
+                final String filename = this._download_path + "/" + this._file_name;
 
-                File file = new File(filename);
+                final File file = new File(filename);
 
-                File temp_file = new File(filename + ".mctemp");
+                final File temp_file = new File(filename + ".mctemp");
 
-                if (file.exists() && !temp_file.exists() && file.length() != _file_size) {
-                    _file_name = _file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
+                if (file.exists() && !temp_file.exists() && file.length() != this._file_size) {
+                    this._file_name = this._file_name.replaceFirst("\\..*$", "_" + MiscTools.genID(8) + "_$0");
                 }
 
                 //Resuming single file links and new/resuming folder links
                 try {
 
-                    deleteDownload(_url); //If resuming
+                    deleteDownload(this._url); //If resuming
 
-                    insertDownload(_url, _ma.getFull_email(), _download_path, _file_name, _file_key, _file_size, _file_pass, _file_noexpire, _custom_chunks_dir);
+                    insertDownload(this._url, this._ma.getFull_email(), this._download_path, this._file_name, this._file_key, this._file_size, this._file_pass, this._file_noexpire, this._custom_chunks_dir);
 
-                    _provision_ok = true;
+                    this._provision_ok = true;
 
-                } catch (SQLException ex) {
+                } catch (final SQLException ex) {
 
-                    _status_error = "Error registering download: " + ex.getMessage();
+                    this._status_error = "Error registering download: " + ex.getMessage();
 
                 }
             }
 
-        } catch (APIException ex) {
+        } catch (final APIException ex) {
 
             throw ex;
 
-        } catch (NumberFormatException ex) {
+        } catch (final NumberFormatException ex) {
 
-            _status_error = ex.getMessage();
+            this._status_error = ex.getMessage();
         }
 
-        if (!_provision_ok) {
+        if (!this._provision_ok) {
 
-            if (_status_error == null) {
-                _status_error = "PROVISION FAILED";
+            if (this._status_error == null) {
+                this._status_error = "PROVISION FAILED";
             }
 
-            if (_file_name != null) {
-                MiscTools.GUIRun(() -> {
-                    getView().getFile_name_label().setVisible(true);
-
-                    getView().getFile_name_label().setText(truncateText(new File(_download_path + "/" + _file_name).getName(), 150));
-
-                    getView().getFile_name_label().setToolTipText(_download_path + "/" + _file_name);
-
-                    getView().getFile_size_label().setVisible(true);
-
-                    getView().getFile_size_label().setText(formatBytes(_file_size));
-                });
-            }
-
-            getView().hideAllExceptStatus();
-
-            getView().printStatusError(_status_error);
-
-            MiscTools.GUIRun(() -> {
-                getView().getClose_button().setVisible(true);
-            });
+//            if (this._file_name != null) {
+//                MiscTools.GUIRun(() -> {
+//                    this.getView().getFile_name_label().setVisible(true);
+//
+//                    this.getView().getFile_name_label().setText(truncateText(new File(this._download_path + "/" + this._file_name).getName(), 150));
+//
+//                    this.getView().getFile_name_label().setToolTipText(this._download_path + "/" + this._file_name);
+//
+//                    this.getView().getFile_size_label().setVisible(true);
+//
+//                    this.getView().getFile_size_label().setText(formatBytes(this._file_size));
+//                });
+//            }
+//
+//            this.getView().hideAllExceptStatus();
+//
+//            this.getView().printStatusError(this._status_error);
+//
+//            MiscTools.GUIRun(() -> {
+//                this.getView().getClose_button().setVisible(true);
+//            });
 
         } else {
 
-            _progress_bar_rate = MAX_VALUE / (double) _file_size;
+            this._progress_bar_rate = MAX_VALUE / (double) this._file_size;
 
-            getView().printStatusNormal(_frozen ? "(FROZEN) Waiting to start..." : "Waiting to start...");
-
-            MiscTools.GUIRun(() -> {
-                getView().getFile_name_label().setVisible(true);
-
-                getView().getFile_name_label().setText(truncateText(new File(_download_path + "/" + _file_name).getName(), 150));
-
-                getView().getFile_name_label().setToolTipText(_download_path + "/" + _file_name);
-
-                getView().getFile_size_label().setVisible(true);
-
-                getView().getFile_size_label().setText(formatBytes(_file_size));
-            });
-
-            MiscTools.GUIRun(() -> {
-                getView().getClose_button().setVisible(true);
-                getView().getQueue_up_button().setVisible(true);
-                getView().getQueue_down_button().setVisible(true);
-                getView().getQueue_top_button().setVisible(true);
-                getView().getQueue_bottom_button().setVisible(true);
-            });
+            LOG.info(this._frozen ? "(FROZEN) Waiting to start..." : "Waiting to start...");
+//
+//            MiscTools.GUIRun(() -> {
+//                this.getView().getFile_name_label().setVisible(true);
+//
+//                this.getView().getFile_name_label().setText(truncateText(new File(this._download_path + "/" + this._file_name).getName(), 150));
+//
+//                this.getView().getFile_name_label().setToolTipText(this._download_path + "/" + this._file_name);
+//
+//                this.getView().getFile_size_label().setVisible(true);
+//
+//                this.getView().getFile_size_label().setText(formatBytes(this._file_size));
+//            });
+//
+//            MiscTools.GUIRun(() -> {
+//                this.getView().getClose_button().setVisible(true);
+//                this.getView().getQueue_up_button().setVisible(true);
+//                this.getView().getQueue_down_button().setVisible(true);
+//                this.getView().getQueue_top_button().setVisible(true);
+//                this.getView().getQueue_bottom_button().setVisible(true);
+//            });
 
         }
 
@@ -1164,16 +1226,16 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     public void pause_worker() {
 
-        synchronized (_workers_lock) {
+        synchronized (this._workers_lock) {
 
-            if (++_paused_workers == _chunkworkers.size() && !_exit) {
+            if (++this._paused_workers == this._chunkworkers.size() && !this._exit) {
 
-                getView().printStatusNormal("Download paused!");
+                LOG.info("Download paused!");
 
-                MiscTools.GUIRun(() -> {
-                    getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
-                    getView().getPause_button().setEnabled(true);
-                });
+//                MiscTools.GUIRun(() -> {
+//                    this.getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
+//                    this.getView().getPause_button().setEnabled(true);
+//                });
 
             }
         }
@@ -1181,22 +1243,22 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     public void pause_worker_mono() {
 
-        getView().printStatusNormal("Download paused!");
+        LOG.info("Download paused!");
 
-        MiscTools.GUIRun(() -> {
-            getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
-            getView().getPause_button().setEnabled(true);
-        });
+//        MiscTools.GUIRun(() -> {
+//            this.getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
+//            this.getView().getPause_button().setEnabled(true);
+//        });
 
     }
 
     public String getDownloadUrlForWorker() {
 
-        synchronized (_dl_url_lock) {
+        synchronized (this._dl_url_lock) {
 
-            if (_last_download_url != null && checkMegaDownloadUrl(_last_download_url)) {
+            if (this._last_download_url != null && checkMegaDownloadUrl(this._last_download_url)) {
 
-                return _last_download_url;
+                return this._last_download_url;
             }
 
             boolean error;
@@ -1210,58 +1272,58 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
                 error = false;
 
                 try {
-                    if (findFirstRegex("://mega(\\.co)?\\.nz/", _url, 0) != null) {
+                    if (findFirstRegex("://mega(\\.co)?\\.nz/", this._url, 0) != null) {
 
-                        download_url = _ma.getMegaFileDownloadUrl(_url);
+                        download_url = this._ma.getMegaFileDownloadUrl(this._url);
 
                     } else {
-                        download_url = MegaCrypterAPI.getMegaFileDownloadUrl(_url, _file_pass, _file_noexpire, _ma.getSid(), getMain_panel().getMega_proxy_server() != null ? (getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8")) + ":" + MiscTools.getMyPublicIP()) : null);
+                        download_url = MegaCrypterAPI.getMegaFileDownloadUrl(this._url, this._file_pass, this._file_noexpire, this._ma.getSid(), this.getMain_panel().getMega_proxy_server() != null ? (this.getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + this.getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8")) + ":" + MiscTools.getMyPublicIP()) : null);
                     }
 
                     if (checkMegaDownloadUrl(download_url)) {
 
-                        _last_download_url = download_url;
+                        this._last_download_url = download_url;
 
                     } else {
 
                         error = true;
                     }
 
-                } catch (Exception ex) {
+                } catch (final Exception ex) {
 
                     error = true;
 
                     try {
                         Thread.sleep(getWaitTimeExpBackOff(conta_error++) * 1000);
-                    } catch (InterruptedException ex2) {
+                    } catch (final InterruptedException ex2) {
                         LOG.log(Level.SEVERE, ex2.getMessage());
                     }
                 }
 
             } while (error);
 
-            return _last_download_url;
+            return this._last_download_url;
 
         }
     }
 
     public void startSlot() {
 
-        if (!_exit) {
+        if (!this._exit) {
 
-            synchronized (_workers_lock) {
+            synchronized (this._workers_lock) {
 
-                int chunk_id = _chunkworkers.size() + 1;
+                final int chunk_id = this._chunkworkers.size() + 1;
 
-                ChunkDownloader c = new ChunkDownloader(chunk_id, this);
+                final ChunkDownloader c = new ChunkDownloader(chunk_id, this);
 
-                _chunkworkers.add(c);
+                this._chunkworkers.add(c);
 
                 try {
 
-                    _thread_pool.execute(c);
+                    this._thread_pool.execute(c);
 
-                } catch (java.util.concurrent.RejectedExecutionException e) {
+                } catch (final java.util.concurrent.RejectedExecutionException e) {
                     LOG.log(Level.INFO, e.getMessage());
                 }
             }
@@ -1270,21 +1332,21 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     public void stopLastStartedSlot() {
 
-        if (!_exit) {
+        if (!this._exit) {
 
-            synchronized (_workers_lock) {
+            synchronized (this._workers_lock) {
 
-                if (!_chunkworkers.isEmpty()) {
+                if (!this._chunkworkers.isEmpty()) {
 
-                    MiscTools.GUIRun(() -> {
-                        getView().getSlots_spinner().setEnabled(false);
-                    });
+//                    MiscTools.GUIRun(() -> {
+//                        this.getView().getSlots_spinner().setEnabled(false);
+//                    });
 
-                    int i = _chunkworkers.size() - 1;
+                    int i = this._chunkworkers.size() - 1;
 
                     while (i >= 0) {
 
-                        ChunkDownloader chundownloader = _chunkworkers.get(i);
+                        final ChunkDownloader chundownloader = this._chunkworkers.get(i);
 
                         if (!chundownloader.isExit()) {
 
@@ -1292,7 +1354,7 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
                             chundownloader.secureNotify();
 
-                            _view.updateSlotsStatus();
+                            this._view.updateSlotsStatus();
 
                             break;
 
@@ -1306,42 +1368,42 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
         }
     }
 
-    public void stopThisSlot(ChunkDownloader chunkdownloader) {
+    public void stopThisSlot(final ChunkDownloader chunkdownloader) {
 
-        synchronized (_workers_lock) {
+        synchronized (this._workers_lock) {
 
-            if (_chunkworkers.remove(chunkdownloader) && !_exit) {
+            if (this._chunkworkers.remove(chunkdownloader) && !this._exit) {
 
-                if (_use_slots) {
+                if (this._use_slots) {
 
-                    if (chunkdownloader.isChunk_exception() || getMain_panel().isExit()) {
+                    if (chunkdownloader.isChunk_exception() || this.getMain_panel().isExit()) {
 
-                        _finalizing = true;
+                        this._finalizing = true;
 
-                        MiscTools.GUIRun(() -> {
-                            getView().getSlots_spinner().setEnabled(false);
+//                        MiscTools.GUIRun(() -> {
+//                            this.getView().getSlots_spinner().setEnabled(false);
+//
+//                            this.getView().getSlots_spinner().setValue((int) this.getView().getSlots_spinner().getValue() - 1);
+//                        });
 
-                            getView().getSlots_spinner().setValue((int) getView().getSlots_spinner().getValue() - 1);
-                        });
-
-                    } else if (!_finalizing) {
-                        MiscTools.GUIRun(() -> {
-                            getView().getSlots_spinner().setEnabled(true);
-                        });
+                    } else if (!this._finalizing) {
+//                        MiscTools.GUIRun(() -> {
+//                            this.getView().getSlots_spinner().setEnabled(true);
+//                        });
                     }
 
-                    getView().updateSlotsStatus();
+//                    this.getView().updateSlotsStatus();
                 }
 
-                if (!_exit && isPause() && _paused_workers == _chunkworkers.size()) {
+                if (!this._exit && this.isPause() && this._paused_workers == this._chunkworkers.size()) {
 
-                    getView().printStatusNormal("Download paused!");
+                    LOG.info("Download paused!");
 
-                    MiscTools.GUIRun(() -> {
-                        getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
-
-                        getView().getPause_button().setEnabled(true);
-                    });
+//                    MiscTools.GUIRun(() -> {
+//                        this.getView().getPause_button().setText(LabelTranslatorSingleton.getInstance().translate("RESUME DOWNLOAD"));
+//
+//                        this.getView().getPause_button().setEnabled(true);
+//                    });
 
                 }
             }
@@ -1349,35 +1411,35 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     }
 
-    private boolean verifyFileCBCMAC(String filename) throws FileNotFoundException, Exception, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+    private boolean verifyFileCBCMAC(final String filename) throws FileNotFoundException, Exception, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
 
-        int old_thread_priority = Thread.currentThread().getPriority();
+        final int old_thread_priority = Thread.currentThread().getPriority();
 
-        int[] int_key = bin2i32a(UrlBASE642Bin(_file_key));
-        int[] iv = new int[]{int_key[4], int_key[5]};
-        int[] meta_mac = new int[]{int_key[6], int_key[7]};
+        final int[] int_key = bin2i32a(UrlBASE642Bin(this._file_key));
+        final int[] iv = new int[]{int_key[4], int_key[5]};
+        final int[] meta_mac = new int[]{int_key[6], int_key[7]};
         int[] file_mac = {0, 0, 0, 0};
-        int[] cbc_iv = {0, 0, 0, 0};
+        final int[] cbc_iv = {0, 0, 0, 0};
 
-        byte[] byte_file_key = initMEGALinkKey(getFile_key());
+        final byte[] byte_file_key = initMEGALinkKey(this.getFile_key());
 
-        Cipher cryptor = genCrypter("AES", "AES/CBC/NoPadding", byte_file_key, i32a2bin(cbc_iv));
+        final Cipher cryptor = genCrypter("AES", "AES/CBC/NoPadding", byte_file_key, i32a2bin(cbc_iv));
 
-        try (BufferedInputStream is = new BufferedInputStream(new FileInputStream(filename))) {
+        try (final BufferedInputStream is = new BufferedInputStream(new FileInputStream(filename))) {
 
             long chunk_id = 1L;
             long tot = 0L;
-            byte[] byte_block = new byte[16];
+            final byte[] byte_block = new byte[16];
             int[] int_block;
             int reads;
             int[] chunk_mac = new int[4];
 
             try {
-                while (!_exit) {
+                while (!this._exit) {
 
-                    long chunk_offset = ChunkWriterManager.calculateChunkOffset(chunk_id, 1);
+                    final long chunk_offset = ChunkWriterManager.calculateChunkOffset(chunk_id, 1);
 
-                    long chunk_size = ChunkWriterManager.calculateChunkSize(chunk_id, this.getFile_size(), chunk_offset, 1);
+                    final long chunk_size = ChunkWriterManager.calculateChunkSize(chunk_id, this.getFile_size(), chunk_offset, 1);
 
                     ChunkWriterManager.checkChunkID(chunk_id, this.getFile_size(), chunk_offset);
 
@@ -1416,17 +1478,17 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
                     file_mac = bin2i32a(cryptor.doFinal(i32a2bin(file_mac)));
 
-                    setProgress(tot);
+                    this.setProgress(tot);
 
                     chunk_id++;
 
                 }
 
-            } catch (ChunkInvalidException e) {
+            } catch (final ChunkInvalidException e) {
 
             }
 
-            int[] cbc = {file_mac[0] ^ file_mac[1], file_mac[2] ^ file_mac[3]};
+            final int[] cbc = {file_mac[0] ^ file_mac[1], file_mac[2] ^ file_mac[3]};
 
             return (cbc[0] == meta_mac[0] && cbc[1] == meta_mac[1]);
         }
@@ -1434,44 +1496,44 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
     public void stopDownloader() {
 
-        if (!_exit) {
+        if (!this._exit) {
 
-            _exit = true;
+            this._exit = true;
 
-            if (isRetrying_request()) {
+            if (this.isRetrying_request()) {
 
-                getView().stop("Retrying cancelled! " + truncateText(_url, 80));
+                LOG.info("Retrying cancelled! " + truncateText(this._url, 80));
 
-            } else if (isChecking_cbc()) {
+            } else if (this.isChecking_cbc()) {
 
-                getView().stop("Verification cancelled! " + truncateText(_file_name, 80));
+                LOG.info("Verification cancelled! " + truncateText(this._file_name, 80));
 
             } else {
 
-                getView().stop("Stopping download, please wait...");
+                LOG.info("Stopping download, please wait...");
 
-                synchronized (_workers_lock) {
+                synchronized (this._workers_lock) {
 
-                    _chunkworkers.forEach((downloader) -> {
+                    this._chunkworkers.forEach((downloader) -> {
                         downloader.secureNotify();
                     });
                 }
 
-                secureNotify();
+                this.secureNotify();
             }
         }
     }
 
-    public void stopDownloader(String reason) {
+    public void stopDownloader(final String reason) {
 
-        _status_error = (reason != null ? LabelTranslatorSingleton.getInstance().translate("FATAL ERROR! ") + reason : LabelTranslatorSingleton.getInstance().translate("FATAL ERROR! "));
+        this._status_error = (reason != null ? LabelTranslatorSingleton.getInstance().translate("FATAL ERROR! ") + reason : LabelTranslatorSingleton.getInstance().translate("FATAL ERROR! "));
 
-        stopDownloader();
+        this.stopDownloader();
     }
 
-    public long calculateMaxTempFileSize(long size) {
+    public long calculateMaxTempFileSize(final long size) {
         if (size > 3584 * 1024) {
-            long reminder = (size - 3584 * 1024) % (1024 * 1024 * (isUse_slots() ? Download.CHUNK_SIZE_MULTI : 1));
+            final long reminder = (size - 3584 * 1024) % (1024 * 1024 * (this.isUse_slots() ? Download.CHUNK_SIZE_MULTI : 1));
 
             return reminder == 0 ? size : (size - reminder);
         } else {
@@ -1486,7 +1548,7 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
         }
     }
 
-    public String[] getMegaFileMetadata(String link, MainPanelView panel, boolean retry_request) throws APIException {
+    public String[] getMegaFileMetadata(final String link, final MainPanelView panel, final boolean retry_request) throws APIException {
 
         String[] file_info = null;
         int retry = 0, error_code;
@@ -1499,30 +1561,30 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
 
                 if (findFirstRegex("://mega(\\.co)?\\.nz/", link, 0) != null) {
 
-                    file_info = _ma.getMegaFileMetadata(link);
+                    file_info = this._ma.getMegaFileMetadata(link);
 
                 } else {
 
-                    file_info = MegaCrypterAPI.getMegaFileMetadata(link, panel, getMain_panel().getMega_proxy_server() != null ? (getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8"))) : null);
+                    file_info = MegaCrypterAPI.getMegaFileMetadata(link, panel, this.getMain_panel().getMega_proxy_server() != null ? (this.getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + this.getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8"))) : null);
                 }
 
-            } catch (APIException ex) {
+            } catch (final APIException ex) {
 
                 error = true;
 
-                _status_error = ex.getMessage();
+                this._status_error = ex.getMessage();
 
                 error_code = ex.getCode();
 
                 if (error_code == -16) {
-                    _status_error = "ERROR: MEGA FILE BLOCKED/DELETED";
+                    this._status_error = "ERROR: MEGA FILE BLOCKED/DELETED";
                 }
 
                 if (Arrays.asList(FATAL_API_ERROR_CODES).contains(error_code)) {
 
-                    _auto_retry_on_error = Arrays.asList(FATAL_API_ERROR_CODES_WITH_RETRY).contains(error_code);
+                    this._auto_retry_on_error = Arrays.asList(FATAL_API_ERROR_CODES_WITH_RETRY).contains(error_code);
 
-                    stopDownloader(error_code == -16 ? _status_error : ex.getMessage() + " " + truncateText(link, 80));
+                    this.stopDownloader(error_code == -16 ? this._status_error : ex.getMessage() + " " + truncateText(link, 80));
 
                 } else {
 
@@ -1531,56 +1593,56 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
                         throw ex;
                     }
 
-                    _retrying_request = true;
+                    this._retrying_request = true;
 
-                    MiscTools.GUIRun(() -> {
+//                    MiscTools.GUIRun(() -> {
+//
+//                        this.getView().getStop_button().setVisible(true);
+//
+//                        this.getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL RETRY"));
+//                    });
 
-                        getView().getStop_button().setVisible(true);
-
-                        getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL RETRY"));
-                    });
-
-                    for (long i = getWaitTimeExpBackOff(retry++); i > 0 && !_exit; i--) {
+                    for (long i = getWaitTimeExpBackOff(retry++); i > 0 && !this._exit; i--) {
                         if (error_code == -18) {
-                            getView().printStatusError(LabelTranslatorSingleton.getInstance().translate("File temporarily unavailable! (Retrying in ") + i + LabelTranslatorSingleton.getInstance().translate(" secs...)"));
+                            LOG.info(LabelTranslatorSingleton.getInstance().translate("File temporarily unavailable! (Retrying in ") + i + LabelTranslatorSingleton.getInstance().translate(" secs...)"));
                         } else {
-                            getView().printStatusError("Mega/MC APIException error " + ex.getMessage() + LabelTranslatorSingleton.getInstance().translate(" (Retrying in ") + i + LabelTranslatorSingleton.getInstance().translate(" secs...)"));
+                            LOG.info("Mega/MC APIException error " + ex.getMessage() + LabelTranslatorSingleton.getInstance().translate(" (Retrying in ") + i + LabelTranslatorSingleton.getInstance().translate(" secs...)"));
                         }
 
                         try {
                             sleep(1000);
-                        } catch (InterruptedException ex2) {
+                        } catch (final InterruptedException ex2) {
                         }
                     }
                 }
 
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
 
                 if (!(ex instanceof APIException)) {
-                    stopDownloader("Mega link is not valid! " + truncateText(link, 80));
+                    this.stopDownloader("Mega link is not valid! " + truncateText(link, 80));
                 }
             }
 
-        } while (!_exit && error);
+        } while (!this._exit && error);
 
-        if (!_exit && !error) {
+        if (!this._exit && !error) {
 
-            _auto_retry_on_error = true;
+            this._auto_retry_on_error = true;
 
-            MiscTools.GUIRun(() -> {
-                getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL DOWNLOAD"));
-                getView().getStop_button().setVisible(false);
-            });
+//            MiscTools.GUIRun(() -> {
+//                this.getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL DOWNLOAD"));
+//                this.getView().getStop_button().setVisible(false);
+//            });
 
         }
 
-        _retrying_request = false;
+        this._retrying_request = false;
 
         return file_info;
 
     }
 
-    public String getMegaFileDownloadUrl(String link) throws IOException, InterruptedException {
+    public String getMegaFileDownloadUrl(final String link) throws IOException, InterruptedException {
 
         String dl_url = null;
         int retry = 0, error_code;
@@ -1590,156 +1652,157 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
             error = false;
 
             try {
-                if (findFirstRegex("://mega(\\.co)?\\.nz/", _url, 0) != null) {
+                if (findFirstRegex("://mega(\\.co)?\\.nz/", this._url, 0) != null) {
 
-                    dl_url = _ma.getMegaFileDownloadUrl(link);
+                    dl_url = this._ma.getMegaFileDownloadUrl(link);
 
                 } else {
-                    dl_url = MegaCrypterAPI.getMegaFileDownloadUrl(link, _file_pass, _file_noexpire, _ma.getSid(), getMain_panel().getMega_proxy_server() != null ? (getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8")) + ":" + MiscTools.getMyPublicIP()) : null);
+                    dl_url = MegaCrypterAPI.getMegaFileDownloadUrl(link, this._file_pass, this._file_noexpire, this._ma.getSid(), this.getMain_panel().getMega_proxy_server() != null ? (this.getMain_panel().getMega_proxy_server().getPort() + ":" + Bin2BASE64(("megacrypter:" + this.getMain_panel().getMega_proxy_server().getPassword()).getBytes("UTF-8")) + ":" + MiscTools.getMyPublicIP()) : null);
                 }
 
-            } catch (APIException ex) {
+            } catch (final APIException ex) {
                 error = true;
 
                 error_code = ex.getCode();
 
                 if (error_code == -16) {
-                    _status_error = "ERROR: MEGA FILE BLOCKED/DELETED";
+                    this._status_error = "ERROR: MEGA FILE BLOCKED/DELETED";
                 }
 
                 if (Arrays.asList(FATAL_API_ERROR_CODES).contains(error_code)) {
 
-                    _auto_retry_on_error = Arrays.asList(FATAL_API_ERROR_CODES_WITH_RETRY).contains(error_code);
+                    this._auto_retry_on_error = Arrays.asList(FATAL_API_ERROR_CODES_WITH_RETRY).contains(error_code);
 
-                    stopDownloader(error_code == -16 ? _status_error : ex.getMessage() + " " + truncateText(link, 80));
+                    this.stopDownloader(error_code == -16 ? this._status_error : ex.getMessage() + " " + truncateText(link, 80));
 
                 } else {
 
-                    _retrying_request = true;
+                    this._retrying_request = true;
 
-                    MiscTools.GUIRun(() -> {
-                        getView().getStop_button().setVisible(true);
+//                    MiscTools.GUIRun(() -> {
+//                        this.getView().getStop_button().setVisible(true);
+//
+//                        this.getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL RETRY"));
+//                    });
 
-                        getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL RETRY"));
-                    });
-
-                    for (long i = getWaitTimeExpBackOff(retry++); i > 0 && !_exit; i--) {
+                    for (long i = getWaitTimeExpBackOff(retry++); i > 0 && !this._exit; i--) {
                         if (error_code == -18) {
-                            getView().printStatusError("File temporarily unavailable! (Retrying in " + i + " secs...)");
+                            LOG.info("File temporarily unavailable! (Retrying in " + i + " secs...)");
                         } else {
-                            getView().printStatusError("Mega/MC APIException error " + ex.getMessage() + " (Retrying in " + i + " secs...)");
+                            LOG.info("Mega/MC APIException error " + ex.getMessage() + " (Retrying in " + i + " secs...)");
                         }
 
                         try {
                             sleep(1000);
-                        } catch (InterruptedException ex2) {
+                        } catch (final InterruptedException ex2) {
                         }
                     }
                 }
             }
 
-        } while (!_exit && error);
+        } while (!this._exit && error);
 
-        if (!_exit && !error) {
+        if (!this._exit && !error) {
 
-            _auto_retry_on_error = true;
+            this._auto_retry_on_error = true;
 
-            MiscTools.GUIRun(() -> {
-                getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL DOWNLOAD"));
-                getView().getStop_button().setVisible(false);
-            });
+//            MiscTools.GUIRun(() -> {
+//                this.getView().getStop_button().setText(LabelTranslatorSingleton.getInstance().translate("CANCEL DOWNLOAD"));
+//                this.getView().getStop_button().setVisible(false);
+//            });
 
         }
 
-        _retrying_request = false;
+        this._retrying_request = false;
 
         return dl_url;
     }
 
     public long nextChunkId() throws ChunkInvalidException {
 
-        synchronized (_chunkid_lock) {
+        synchronized (this._chunkid_lock) {
 
-            if (_main_panel.isExit()) {
+            if (this._main_panel.isExit()) {
                 throw new ChunkInvalidException(null);
             }
 
-            Long next_id;
+            final Long next_id;
 
-            if ((next_id = _rejectedChunkIds.poll()) != null) {
+            if ((next_id = this._rejectedChunkIds.poll()) != null) {
                 return next_id;
             } else {
-                return ++_last_chunk_id_dispatched;
+                return ++this._last_chunk_id_dispatched;
             }
         }
 
     }
 
-    public void rejectChunkId(long chunk_id) {
-        _rejectedChunkIds.add(chunk_id);
+    public void rejectChunkId(final long chunk_id) {
+        this._rejectedChunkIds.add(chunk_id);
     }
 
     @Override
     public void secureNotify() {
-        synchronized (_secure_notify_lock) {
+        synchronized (this._secure_notify_lock) {
 
-            _notified = true;
+            this._notified = true;
 
-            _secure_notify_lock.notify();
+            this._secure_notify_lock.notify();
         }
     }
 
     @Override
     public void secureWait() {
 
-        synchronized (_secure_notify_lock) {
-            while (!_notified) {
+        synchronized (this._secure_notify_lock) {
+            while (!this._notified) {
 
                 try {
-                    _secure_notify_lock.wait(1000);
-                } catch (InterruptedException ex) {
-                    _exit = true;
+                    this._secure_notify_lock.wait(1000);
+                } catch (final InterruptedException ex) {
+                    this._exit = true;
                     LOG.log(SEVERE, null, ex);
                 }
             }
 
-            _notified = false;
+            this._notified = false;
         }
     }
 
     @Override
-    public void setProgress(long progress) {
+    public void setProgress(final long progress) {
 
-        synchronized (_progress_lock) {
+        synchronized (this._progress_lock) {
 
-            long old_progress = _progress;
+            final long old_progress = this._progress;
 
-            _progress = progress;
+            this._progress = progress;
 
-            getMain_panel().getDownload_manager().increment_total_progress(_progress - old_progress);
+            this.getMain_panel().getDownload_manager().increment_total_progress(this._progress - old_progress);
 
-            int old_percent_progress = (int) Math.floor(((double) old_progress / _file_size) * 100);
+            final int old_percent_progress = (int) Math.floor(((double) old_progress / this._file_size) * 100);
 
-            int new_percent_progress = (int) Math.floor(((double) progress / _file_size) * 100);
+            int new_percent_progress = (int) Math.floor(((double) progress / this._file_size) * 100);
 
-            if (new_percent_progress == 100 && progress != _file_size) {
+            if (new_percent_progress == 100 && progress != this._file_size) {
                 new_percent_progress = 99;
             }
 
             if (new_percent_progress > old_percent_progress) {
-                getView().updateProgressBar(_progress, _progress_bar_rate);
+//                LOG.info(new_percent_progress + "% " + this._progress + "/" + this._file_size);
+//                this.getView().updateProgressBar(this._progress, this._progress_bar_rate);
             }
         }
     }
 
     @Override
     public boolean isStatusError() {
-        return _status_error != null;
+        return this._status_error != null;
     }
 
     @Override
     public int getSlotsCount() {
-        return getChunkworkers().size();
+        return this.getChunkworkers().size();
     }
 
     @Override
@@ -1750,49 +1813,49 @@ public class Download implements Transference, Runnable, SecureSingleThreadNotif
     @Override
     public void unfreeze() {
 
-        getView().printStatusNormal(getView().getStatus_label().getText().replaceFirst("^\\([^)]+\\) ", ""));
+//        LOG.info(this.getView().getStatus_label().getText().replaceFirst("^\\([^)]+\\) ", ""));
 
-        _frozen = false;
+        this._frozen = false;
     }
 
     @Override
     public void upWaitQueue() {
-        _main_panel.getDownload_manager().upWaitQueue(this);
+        this._main_panel.getDownload_manager().upWaitQueue(this);
     }
 
     @Override
     public void downWaitQueue() {
-        _main_panel.getDownload_manager().downWaitQueue(this);
+        this._main_panel.getDownload_manager().downWaitQueue(this);
     }
 
     @Override
     public void bottomWaitQueue() {
-        _main_panel.getDownload_manager().bottomWaitQueue(this);
+        this._main_panel.getDownload_manager().bottomWaitQueue(this);
     }
 
     @Override
     public void topWaitQueue() {
-        _main_panel.getDownload_manager().topWaitQueue(this);
+        this._main_panel.getDownload_manager().topWaitQueue(this);
     }
 
     @Override
     public boolean isRestart() {
-        return _restart;
+        return this._restart;
     }
 
     @Override
     public boolean isClosed() {
-        return _closed;
+        return this._closed;
     }
 
     @Override
     public int getPausedWorkers() {
-        return _paused_workers;
+        return this._paused_workers;
     }
 
     @Override
     public int getTotWorkers() {
-        return getChunkworkers().size();
+        return this.getChunkworkers().size();
     }
 
 }

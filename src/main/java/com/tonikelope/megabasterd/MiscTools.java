@@ -9,25 +9,17 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
-import static com.tonikelope.megabasterd.MainPanel.VERSION;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Desktop;
-import java.awt.Dialog;
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.Frame;
-import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.image.BufferedImage;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiEvent;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Sequencer;
+import javax.sound.midi.ShortMessage;
+import javax.sound.midi.Synthesizer;
+import javax.sound.midi.Track;
+import javax.xml.bind.DatatypeConverter;
+import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,13 +32,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -67,13 +57,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
@@ -81,38 +67,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MidiEvent;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.ShortMessage;
-import javax.sound.midi.Synthesizer;
-import javax.sound.midi.Track;
-import javax.swing.AbstractButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
-import javax.swing.border.TitledBorder;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.annotation.adapters.HexBinaryAdapter;
+
+import static com.tonikelope.megabasterd.MainPanel.VERSION;
 
 /**
- *
  * @author tonikelope
  */
 public class MiscTools {
@@ -124,33 +82,33 @@ public class MiscTools {
     public static final int HTTP_TIMEOUT = 30;
     public static final String UPLOAD_LOGS_DIR = System.getProperty("user.home") + File.separator + "MEGABASTERD_UPLOAD_LOGS";
 
-    private static final Comparator<DefaultMutableTreeNode> TREE_NODE_COMPARATOR = (DefaultMutableTreeNode a, DefaultMutableTreeNode b) -> {
-        if (a.isLeaf() && !b.isLeaf()) {
-            return 1;
-        } else if (!a.isLeaf() && b.isLeaf()) {
-            return -1;
-        } else {
-
-            Object ca = a.getUserObject();
-
-            Object cb = b.getUserObject();
-
-            if (ca instanceof String) {
-                return MiscTools.naturalCompare((String) ca, (String) cb, true);
-            } else {
-                return MiscTools.naturalCompare((String) ((Map) ca).get("name"), (String) ((Map) cb).get("name"), true);
-            }
-        }
-    };
+    //    private static final Comparator<DefaultMutableTreeNode> TREE_NODE_COMPARATOR = (DefaultMutableTreeNode a, DefaultMutableTreeNode b) -> {
+//        if (a.isLeaf() && !b.isLeaf()) {
+//            return 1;
+//        } else if (!a.isLeaf() && b.isLeaf()) {
+//            return -1;
+//        } else {
+//
+//            Object ca = a.getUserObject();
+//
+//            Object cb = b.getUserObject();
+//
+//            if (ca instanceof String) {
+//                return MiscTools.naturalCompare((String) ca, (String) cb, true);
+//            } else {
+//                return MiscTools.naturalCompare((String) ((Map) ca).get("name"), (String) ((Map) cb).get("name"), true);
+//            }
+//        }
+//    };
     private static final Logger LOG = Logger.getLogger(MiscTools.class.getName());
 
-    public static String computeFileSHA1(File file) throws IOException {
+    public static String computeFileSHA1(final File file) throws IOException {
 
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-1");
-            BufferedInputStream fis = new BufferedInputStream(new FileInputStream(file));
+            final MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            final BufferedInputStream fis = new BufferedInputStream(new FileInputStream(file));
             int n = 0;
-            byte[] buffer = new byte[8192];
+            final byte[] buffer = new byte[8192];
             while (n != -1) {
                 n = fis.read(buffer);
                 if (n > 0) {
@@ -158,7 +116,7 @@ public class MiscTools {
                 }
             }
             return new HexBinaryAdapter().marshal(digest.digest()).toLowerCase().trim();
-        } catch (NoSuchAlgorithmException ex) {
+        } catch (final NoSuchAlgorithmException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -171,15 +129,15 @@ public class MiscTools {
             try {
                 Files.createDirectory(Paths.get(UPLOAD_LOGS_DIR));
 
-                File dir = new File(System.getProperty("user.home"));
+                final File dir = new File(System.getProperty("user.home"));
 
-                for (File file : dir.listFiles()) {
+                for (final File file : dir.listFiles()) {
                     if (!file.isDirectory() && file.getName().startsWith("megabasterd_upload_")) {
                         Files.move(file.toPath(), Paths.get(UPLOAD_LOGS_DIR + File.separator + file.getName()));
                     }
                 }
 
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
             }
 
@@ -187,9 +145,9 @@ public class MiscTools {
     }
 
     public static void purgeFolderCache() {
-        File directory = new File(System.getProperty("java.io.tmpdir"));
+        final File directory = new File(System.getProperty("java.io.tmpdir"));
 
-        for (File f : directory.listFiles()) {
+        for (final File f : directory.listFiles()) {
             if (f.isFile() && f.getName().startsWith("megabasterd_folder_cache_")) {
                 f.delete();
                 Logger.getLogger(MiscTools.class.getName()).log(Level.INFO, "REMOVING FOLDER CACHE FILE {0}", f.getAbsolutePath());
@@ -197,66 +155,66 @@ public class MiscTools {
         }
     }
 
-    public static void containerSetEnabled(Container panel, boolean enabled) {
-
-        for (Component cp : panel.getComponents()) {
-
-            if (cp instanceof Container) {
-                containerSetEnabled((Container) cp, enabled);
-            }
-
-            cp.setEnabled(enabled);
-        }
-    }
+//    public static void containerSetEnabled(final Container panel, final boolean enabled) {
+//
+//        for (final Component cp : panel.getComponents()) {
+//
+//            if (cp instanceof Container) {
+//                containerSetEnabled((Container) cp, enabled);
+//            }
+//
+//            cp.setEnabled(enabled);
+//        }
+//    }
 
     public static String getFechaHoraActual() {
 
-        String format = "dd-MM-yyyy HH:mm:ss";
+        final String format = "dd-MM-yyyy HH:mm:ss";
 
         return getFechaHoraActual(format);
     }
 
-    public static boolean isVideoFile(String filename) {
+    public static boolean isVideoFile(final String filename) {
 
         try {
 
-            String part_file = MiscTools.findFirstRegex("\\.part[0-9]+-[0-9]+$", filename, 0);
+            final String part_file = MiscTools.findFirstRegex("\\.part[0-9]+-[0-9]+$", filename, 0);
 
             return part_file == null && Files.probeContentType(Paths.get(filename)).startsWith("video/");
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return false;
     }
 
-    public static boolean isImageFile(String filename) {
+    public static boolean isImageFile(final String filename) {
 
         try {
 
-            String part_file = MiscTools.findFirstRegex("\\.part[0-9]+-[0-9]+$", filename, 0);
+            final String part_file = MiscTools.findFirstRegex("\\.part[0-9]+-[0-9]+$", filename, 0);
 
             return part_file == null && Files.probeContentType(Paths.get(filename)).startsWith("image/");
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return false;
     }
 
-    public static String getFechaHoraActual(String format) {
+    public static String getFechaHoraActual(final String format) {
 
-        Date currentDate = new Date(System.currentTimeMillis());
+        final Date currentDate = new Date(System.currentTimeMillis());
 
-        DateFormat df = new SimpleDateFormat(format);
+        final DateFormat df = new SimpleDateFormat(format);
 
         return df.format(currentDate);
     }
 
-    public static void deleteDirectoryRecursion(Path path) throws IOException {
+    public static void deleteDirectoryRecursion(final Path path) throws IOException {
         if (Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
-            try (DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
-                for (Path entry : entries) {
+            try (final DirectoryStream<Path> entries = Files.newDirectoryStream(path)) {
+                for (final Path entry : entries) {
                     deleteDirectoryRecursion(entry);
                 }
             }
@@ -264,85 +222,85 @@ public class MiscTools {
         Files.delete(path);
     }
 
-    public static Font createAndRegisterFont(String name) {
+//    public static Font createAndRegisterFont(final String name) {
+//
+//        Font font = null;
+//
+//        try {
+//
+//            font = Font.createFont(Font.TRUETYPE_FONT, MiscTools.class.getResourceAsStream(name));
+//
+//            final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//
+//            ge.registerFont(font);
+//
+//        } catch (final FontFormatException | IOException ex) {
+//            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
+//        }
+//
+//        return font;
+//    }
 
-        Font font = null;
-
-        try {
-
-            font = Font.createFont(Font.TRUETYPE_FONT, MiscTools.class.getResourceAsStream(name));
-
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
-            ge.registerFont(font);
-
-        } catch (FontFormatException | IOException ex) {
-            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-        }
-
-        return font;
+    public static void setNimbusLookAndFeel(final boolean dark) {
+//
+//        try {
+//            for (final javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//
+//                if ("Nimbus".equals(info.getName())) {
+//
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//
+//                    if (dark) {
+//                        // Dark LAF
+//                        UIManager.put("control", new Color(128, 128, 128));
+//                        UIManager.put("info", new Color(128, 128, 128));
+//                        UIManager.put("nimbusBase", new Color(18, 30, 49));
+//                        UIManager.put("nimbusAlertYellow", new Color(248, 187, 0));
+//                        UIManager.put("nimbusDisabledText", new Color(100, 100, 100));
+//                        UIManager.put("nimbusFocus", new Color(115, 164, 209));
+//                        UIManager.put("nimbusGreen", new Color(176, 179, 50));
+//                        UIManager.put("nimbusInfoBlue", new Color(66, 139, 221));
+//                        UIManager.put("nimbusLightBackground", new Color(18, 30, 49));
+//                        UIManager.put("nimbusOrange", new Color(191, 98, 4));
+//                        UIManager.put("nimbusRed", new Color(169, 46, 34));
+//                        UIManager.put("nimbusSelectedText", new Color(255, 255, 255));
+//                        UIManager.put("nimbusSelectionBackground", new Color(104, 93, 156));
+//                        UIManager.put("text", new Color(230, 230, 230));
+//
+//                    } else {
+//                        final UIDefaults defaults = UIManager.getLookAndFeelDefaults();
+//                        defaults.put("nimbusOrange", defaults.get("nimbusFocus"));
+//                    }
+//
+//                    break;
+//                }
+//            }
+//        } catch (final Exception ex) {
+//            java.util.logging.Logger.getLogger(MiscTools.class.getName()).log(java.util.logging.Level.SEVERE, ex.getMessage());
+//        }
     }
 
-    public static void setNimbusLookAndFeel(boolean dark) {
+    public static int[] bin2i32a(final byte[] bin) {
+        final int l = (int) (4 * Math.ceil((double) bin.length / 4));
 
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+        final IntBuffer intBuf = ByteBuffer.wrap(bin, 0, l).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
 
-                if ("Nimbus".equals(info.getName())) {
-
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-
-                    if (dark) {
-                        // Dark LAF
-                        UIManager.put("control", new Color(128, 128, 128));
-                        UIManager.put("info", new Color(128, 128, 128));
-                        UIManager.put("nimbusBase", new Color(18, 30, 49));
-                        UIManager.put("nimbusAlertYellow", new Color(248, 187, 0));
-                        UIManager.put("nimbusDisabledText", new Color(100, 100, 100));
-                        UIManager.put("nimbusFocus", new Color(115, 164, 209));
-                        UIManager.put("nimbusGreen", new Color(176, 179, 50));
-                        UIManager.put("nimbusInfoBlue", new Color(66, 139, 221));
-                        UIManager.put("nimbusLightBackground", new Color(18, 30, 49));
-                        UIManager.put("nimbusOrange", new Color(191, 98, 4));
-                        UIManager.put("nimbusRed", new Color(169, 46, 34));
-                        UIManager.put("nimbusSelectedText", new Color(255, 255, 255));
-                        UIManager.put("nimbusSelectionBackground", new Color(104, 93, 156));
-                        UIManager.put("text", new Color(230, 230, 230));
-
-                    } else {
-                        UIDefaults defaults = UIManager.getLookAndFeelDefaults();
-                        defaults.put("nimbusOrange", defaults.get("nimbusFocus"));
-                    }
-
-                    break;
-                }
-            }
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(MiscTools.class.getName()).log(java.util.logging.Level.SEVERE, ex.getMessage());
-        }
-    }
-
-    public static int[] bin2i32a(byte[] bin) {
-        int l = (int) (4 * Math.ceil((double) bin.length / 4));
-
-        IntBuffer intBuf = ByteBuffer.wrap(bin, 0, l).order(ByteOrder.BIG_ENDIAN).asIntBuffer();
-
-        int[] array = new int[intBuf.remaining()];
+        final int[] array = new int[intBuf.remaining()];
 
         intBuf.get(array);
 
         return array;
     }
 
-    public static byte[] i32a2bin(int[] values) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    public static byte[] i32a2bin(final int[] values) {
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        DataOutputStream dos = new DataOutputStream(baos);
+        final DataOutputStream dos = new DataOutputStream(baos);
 
         for (int i = 0; i < values.length; ++i) {
             try {
                 dos.writeInt(values[i]);
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -350,39 +308,39 @@ public class MiscTools {
         return baos.toByteArray();
     }
 
-    public static BigInteger mpi2big(byte[] s) {
+    public static BigInteger mpi2big(final byte[] s) {
 
-        byte[] ns = Arrays.copyOfRange(s, 2, s.length);
+        final byte[] ns = Arrays.copyOfRange(s, 2, s.length);
 
-        BigInteger bigi = new BigInteger(1, ns);
+        final BigInteger bigi = new BigInteger(1, ns);
 
         return bigi;
     }
 
-    public static BufferedImage toBufferedImage(Image img) {
-        if (img instanceof BufferedImage) {
-            return (BufferedImage) img;
-        }
+//    public static BufferedImage toBufferedImage(final Image img) {
+//        if (img instanceof BufferedImage) {
+//            return (BufferedImage) img;
+//        }
+//
+//        // Create a buffered image with transparency
+//        final BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+//
+//        // Draw the image on to the buffered image
+//        final Graphics2D bGr = bimage.createGraphics();
+//        bGr.drawImage(img, 0, 0, null);
+//        bGr.dispose();
+//
+//        // Return the buffered image
+//        return bimage;
+//    }
 
-        // Create a buffered image with transparency
-        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+    public static String genID(final int length) {
 
-        // Draw the image on to the buffered image
-        Graphics2D bGr = bimage.createGraphics();
-        bGr.drawImage(img, 0, 0, null);
-        bGr.dispose();
-
-        // Return the buffered image
-        return bimage;
-    }
-
-    public static String genID(int length) {
-
-        String pos = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        final String pos = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
         String res = "";
 
-        Random randomno = new Random();
+        final Random randomno = new Random();
 
         for (int i = 0; i < length; i++) {
 
@@ -394,7 +352,7 @@ public class MiscTools {
 
     public static byte[] long2bytearray(long val) {
 
-        byte[] b = new byte[8];
+        final byte[] b = new byte[8];
 
         for (int i = 7; i >= 0; i--) {
             b[i] = (byte) val;
@@ -404,7 +362,7 @@ public class MiscTools {
         return b;
     }
 
-    public static long bytearray2long(byte[] val) {
+    public static long bytearray2long(final byte[] val) {
 
         long l = 0;
 
@@ -416,20 +374,20 @@ public class MiscTools {
         return l;
     }
 
-    public static String findFirstRegex(String regex, String data, int group) {
-        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+    public static String findFirstRegex(final String regex, final String data, final int group) {
+        final Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
 
-        Matcher matcher = pattern.matcher(data);
+        final Matcher matcher = pattern.matcher(data);
 
         return matcher.find() ? matcher.group(group) : null;
     }
 
-    public static ArrayList<String> findAllRegex(String regex, String data, int group) {
-        Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
+    public static ArrayList<String> findAllRegex(final String regex, final String data, final int group) {
+        final Pattern pattern = Pattern.compile(regex, Pattern.DOTALL);
 
-        Matcher matcher = pattern.matcher(data);
+        final Matcher matcher = pattern.matcher(data);
 
-        ArrayList<String> matches = new ArrayList<>();
+        final ArrayList<String> matches = new ArrayList<>();
 
         while (matcher.find()) {
             matches.add(matcher.group(group));
@@ -438,111 +396,111 @@ public class MiscTools {
         return matches;
     }
 
-    public static void updateFonts(final Component component, final Font font, final float zoom_factor) {
+//    public static void updateFonts(final Component component, final Font font, final float zoom_factor) {
+//
+//        if (component != null) {
+//
+//            if (component instanceof javax.swing.JMenu) {
+//
+//                for (final Component child : ((javax.swing.JMenu) component).getMenuComponents()) {
+//                    if (child instanceof JMenuItem) {
+//
+//                        updateFonts(child, font, zoom_factor);
+//                    }
+//                }
+//
+//            } else if (component instanceof Container) {
+//
+//                for (final Component child : ((Container) component).getComponents()) {
+//                    if (child instanceof Container) {
+//
+//                        updateFonts(child, font, zoom_factor);
+//                    }
+//                }
+//            }
+//
+//            final Font old_font = component.getFont();
+//
+//            final Font new_font = font.deriveFont(old_font.getStyle(), Math.round(old_font.getSize() * zoom_factor));
+//
+//            boolean error;
+//
+//            do {
+//                try {
+//                    component.setFont(new_font);
+//                    error = false;
+//                } catch (final Exception ex) {
+//                    error = true;
+//                }
+//            } while (error);
+//
+//        }
+//    }
 
-        if (component != null) {
+//    public static void translateLabels(final Component component) {
+//
+//        if (component != null) {
+//
+//            if (component instanceof javax.swing.JLabel) {
+//
+//                ((JLabel) component).setText(LabelTranslatorSingleton.getInstance().translate(((JLabel) component).getText()));
+//
+//            } else if (component instanceof javax.swing.JButton) {
+//
+//                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
+//
+//            } else if (component instanceof javax.swing.JCheckBox) {
+//
+//                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
+//
+//            } else if ((component instanceof JMenuItem) && !(component instanceof JMenu)) {
+//
+//                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
+//
+//            } else if (component instanceof JMenu) {
+//
+//                for (final Component child : ((JMenu) component).getMenuComponents()) {
+//                    if (child instanceof JMenuItem) {
+//                        translateLabels(child);
+//                    }
+//                }
+//
+//                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
+//
+//            } else if (component instanceof Container) {
+//
+//                for (final Component child : ((Container) component).getComponents()) {
+//                    if (child instanceof Container) {
+//
+//                        translateLabels(child);
+//                    }
+//                }
+//
+//                if ((component instanceof JPanel) && (((JComponent) component).getBorder() instanceof TitledBorder)) {
+//                    ((TitledBorder) ((JComponent) component).getBorder()).setTitle(LabelTranslatorSingleton.getInstance().translate(((TitledBorder) ((JComponent) component).getBorder()).getTitle()));
+//                }
+//
+//                if (component instanceof JDialog) {
+//                    ((Dialog) component).setTitle(LabelTranslatorSingleton.getInstance().translate(((Dialog) component).getTitle()));
+//                }
+//            }
+//        }
+//    }
 
-            if (component instanceof javax.swing.JMenu) {
-
-                for (Component child : ((javax.swing.JMenu) component).getMenuComponents()) {
-                    if (child instanceof JMenuItem) {
-
-                        updateFonts(child, font, zoom_factor);
-                    }
-                }
-
-            } else if (component instanceof Container) {
-
-                for (Component child : ((Container) component).getComponents()) {
-                    if (child instanceof Container) {
-
-                        updateFonts(child, font, zoom_factor);
-                    }
-                }
-            }
-
-            Font old_font = component.getFont();
-
-            Font new_font = font.deriveFont(old_font.getStyle(), Math.round(old_font.getSize() * zoom_factor));
-
-            boolean error;
-
-            do {
-                try {
-                    component.setFont(new_font);
-                    error = false;
-                } catch (Exception ex) {
-                    error = true;
-                }
-            } while (error);
-
-        }
-    }
-
-    public static void translateLabels(final Component component) {
-
-        if (component != null) {
-
-            if (component instanceof javax.swing.JLabel) {
-
-                ((JLabel) component).setText(LabelTranslatorSingleton.getInstance().translate(((JLabel) component).getText()));
-
-            } else if (component instanceof javax.swing.JButton) {
-
-                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
-
-            } else if (component instanceof javax.swing.JCheckBox) {
-
-                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
-
-            } else if ((component instanceof JMenuItem) && !(component instanceof JMenu)) {
-
-                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
-
-            } else if (component instanceof JMenu) {
-
-                for (Component child : ((JMenu) component).getMenuComponents()) {
-                    if (child instanceof JMenuItem) {
-                        translateLabels(child);
-                    }
-                }
-
-                ((AbstractButton) component).setText(LabelTranslatorSingleton.getInstance().translate(((AbstractButton) component).getText()));
-
-            } else if (component instanceof Container) {
-
-                for (Component child : ((Container) component).getComponents()) {
-                    if (child instanceof Container) {
-
-                        translateLabels(child);
-                    }
-                }
-
-                if ((component instanceof JPanel) && (((JComponent) component).getBorder() instanceof TitledBorder)) {
-                    ((TitledBorder) ((JComponent) component).getBorder()).setTitle(LabelTranslatorSingleton.getInstance().translate(((TitledBorder) ((JComponent) component).getBorder()).getTitle()));
-                }
-
-                if (component instanceof JDialog) {
-                    ((Dialog) component).setTitle(LabelTranslatorSingleton.getInstance().translate(((Dialog) component).getTitle()));
-                }
-            }
-        }
-    }
-
-    public static Sequencer midiLoopPlay(String midi, int volume) {
+    public static Sequencer midiLoopPlay(final String midi, final int volume) {
         try {
-            Sequencer sequencer = MidiSystem.getSequencer();
+            final Sequencer sequencer = MidiSystem.getSequencer();
 
             if (sequencer == null) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, "MIDI Sequencer device not supported");
                 return null;
             }
 
-            Synthesizer synthesizer = MidiSystem.getSynthesizer();
+            final Synthesizer synthesizer = MidiSystem.getSynthesizer();
 
-            Sequence sequence = MidiSystem.getSequence(MiscTools.class.getResource(midi));
+            final Sequence sequence = MidiSystem.getSequence(MiscTools.class.getResource(midi));
 
-            for (Track t : sequence.getTracks()) {
+            for (final Track t : sequence.getTracks()) {
 
                 for (int k = 0; k < synthesizer.getChannels().length; k++) {
                     t.add(new MidiEvent(new ShortMessage(ShortMessage.CONTROL_CHANGE, k, 7, volume), t.ticks()));
@@ -554,163 +512,163 @@ public class MiscTools {
             sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
             sequencer.start();
             return sequencer;
-        } catch (MidiUnavailableException | InvalidMidiDataException | IOException ex) {
+        } catch (final MidiUnavailableException | InvalidMidiDataException | IOException ex) {
             ex.printStackTrace();
         }
         return null;
     }
 
-    public static void updateTitledBorderFont(final TitledBorder border, final Font font, final float zoom_factor) {
+//    public static void updateTitledBorderFont(final TitledBorder border, final Font font, final float zoom_factor) {
+//
+//        final Font old_title_font = border.getTitleFont();
+//
+//        final Font new_title_font = font.deriveFont(old_title_font.getStyle(), Math.round(old_title_font.getSize() * zoom_factor));
+//
+//        border.setTitleFont(new_title_font);
+//    }
 
-        Font old_title_font = border.getTitleFont();
-
-        Font new_title_font = font.deriveFont(old_title_font.getStyle(), Math.round(old_title_font.getSize() * zoom_factor));
-
-        border.setTitleFont(new_title_font);
-    }
-
-    public static String HashString(String algo, String data) {
+    public static String HashString(final String algo, final String data) {
         try {
-            MessageDigest md = MessageDigest.getInstance(algo);
+            final MessageDigest md = MessageDigest.getInstance(algo);
 
-            byte[] thedigest = md.digest(data.getBytes("UTF-8"));
+            final byte[] thedigest = md.digest(data.getBytes("UTF-8"));
 
             return bin2hex(thedigest);
-        } catch (NoSuchAlgorithmException ex) {
+        } catch (final NoSuchAlgorithmException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (UnsupportedEncodingException ex) {
+        } catch (final UnsupportedEncodingException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
     }
 
-    public static String HashString(String algo, byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance(algo);
+    public static String HashString(final String algo, final byte[] data) throws NoSuchAlgorithmException {
+        final MessageDigest md = MessageDigest.getInstance(algo);
 
-        byte[] thedigest = md.digest(data);
+        final byte[] thedigest = md.digest(data);
 
         return bin2hex(thedigest);
     }
 
-    public static byte[] HashBin(String algo, String data) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        MessageDigest md = MessageDigest.getInstance(algo);
+    public static byte[] HashBin(final String algo, final String data) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        final MessageDigest md = MessageDigest.getInstance(algo);
 
         return md.digest(data.getBytes("UTF-8"));
     }
 
-    public static byte[] HashBin(String algo, byte[] data) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance(algo);
+    public static byte[] HashBin(final String algo, final byte[] data) throws NoSuchAlgorithmException {
+        final MessageDigest md = MessageDigest.getInstance(algo);
 
         return md.digest(data);
     }
 
-    public static byte[] BASE642Bin(String data) {
+    public static byte[] BASE642Bin(final String data) {
         return Base64.getDecoder().decode(data);
     }
 
-    public static String Bin2BASE64(byte[] data) {
+    public static String Bin2BASE64(final byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
 
-    public static byte[] UrlBASE642Bin(String data) {
+    public static byte[] UrlBASE642Bin(final String data) {
         return Base64.getUrlDecoder().decode(data);
     }
 
-    public static String Bin2UrlBASE64(byte[] data) {
+    public static String Bin2UrlBASE64(final byte[] data) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
     }
 
-    public static void pausar(long pause) {
+    public static void pausar(final long pause) {
         try {
             Thread.sleep(pause);
-        } catch (InterruptedException ex) {
+        } catch (final InterruptedException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
 
-    public static void GUIRun(Runnable r) {
-
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(r);
-        } else {
-            r.run();
-        }
-
+    public static void GUIRun(final Runnable r) {
+//
+//        if (!SwingUtilities.isEventDispatchThread()) {
+//            SwingUtilities.invokeLater(r);
+//        } else {
+//            r.run();
+//        }
+//
     }
 
-    public static void GUIRunAndWait(Runnable r) {
-
-        try {
-            if (!SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeAndWait(r);
-            } else {
-                r.run();
-            }
-        } catch (Exception ex) {
-
-            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
-
-        }
-
+    public static void GUIRunAndWait(final Runnable r) {
+//
+//        try {
+//            if (!SwingUtilities.isEventDispatchThread()) {
+//                SwingUtilities.invokeAndWait(r);
+//            } else {
+//                r.run();
+//            }
+//        } catch (final Exception ex) {
+//
+//            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
+//
+//        }
+//
     }
 
-    public static FutureTask futureRun(Callable c) {
+    public static FutureTask futureRun(final Callable c) {
 
-        FutureTask f = new FutureTask(c);
+        final FutureTask f = new FutureTask(c);
 
-        Thread hilo = new Thread(f);
+        final Thread hilo = new Thread(f);
 
         hilo.start();
 
         return f;
     }
 
-    public static long getWaitTimeExpBackOff(int retryCount) {
+    public static long getWaitTimeExpBackOff(final int retryCount) {
 
-        long waitTime = ((long) Math.pow(EXP_BACKOFF_BASE, retryCount) * EXP_BACKOFF_SECS_RETRY);
+        final long waitTime = ((long) Math.pow(EXP_BACKOFF_BASE, retryCount) * EXP_BACKOFF_SECS_RETRY);
 
         return Math.min(waitTime, EXP_BACKOFF_MAX_WAIT_TIME);
     }
 
-    public static String bin2hex(byte[] b) {
+    public static String bin2hex(final byte[] b) {
 
-        BigInteger bi = new BigInteger(1, b);
+        final BigInteger bi = new BigInteger(1, b);
 
         return String.format("%0" + (b.length << 1) + "x", bi);
     }
 
-    public static byte[] hex2bin(String s) {
+    public static byte[] hex2bin(final String s) {
         return DatatypeConverter.parseHexBinary(s);
     }
 
-    public static void copyTextToClipboard(String text) {
-
-        StringSelection stringSelection = new StringSelection(text);
-        Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clpbrd.setContents(stringSelection, null);
-
+    public static void copyTextToClipboard(final String text) {
+//
+//        final StringSelection stringSelection = new StringSelection(text);
+//        final Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+//        clpbrd.setContents(stringSelection, null);
+//
     }
 
     public static String formatBytes(Long bytes) {
 
-        String[] units = {"B", "KB", "MB", "GB", "TB"};
+        final String[] units = {"B", "KB", "MB", "GB", "TB"};
 
         bytes = Math.max(bytes, 0L);
 
-        int pow = Math.min((int) ((bytes > 0L ? Math.log(bytes) : 0) / Math.log(1024)), units.length - 1);
+        final int pow = Math.min((int) ((bytes > 0L ? Math.log(bytes) : 0) / Math.log(1024)), units.length - 1);
 
-        Double bytes_double = (double) bytes / (1L << (10 * pow));
+        final Double bytes_double = (double) bytes / (1L << (10 * pow));
 
-        DecimalFormat df = new DecimalFormat("#.##");
+        final DecimalFormat df = new DecimalFormat("#.##");
 
         return df.format(bytes_double) + ' ' + units[pow];
     }
 
-    public static MegaMutableTreeNode calculateTreeFolderSizes(MegaMutableTreeNode node) {
+    public static MegaMutableTreeNode calculateTreeFolderSizes(final MegaMutableTreeNode node) {
 
-        int n = node.getChildCount();
+        final int n = node.getChildCount();
 
         for (int i = 0; i < n; i++) {
 
@@ -726,13 +684,13 @@ public class MiscTools {
 
     }
 
-    public static MegaMutableTreeNode resetTreeFolderSizes(MegaMutableTreeNode node) {
+    public static MegaMutableTreeNode resetTreeFolderSizes(final MegaMutableTreeNode node) {
 
         if (!node.isLeaf()) {
 
             node.setMega_node_size(0);
 
-            int n = node.getChildCount();
+            final int n = node.getChildCount();
 
             for (int i = 0; i < n; i++) {
 
@@ -746,15 +704,15 @@ public class MiscTools {
 
     }
 
-    public static MegaMutableTreeNode findMegaTreeNodeByID(MegaMutableTreeNode root, String node_id) {
+    public static MegaMutableTreeNode findMegaTreeNodeByID(final MegaMutableTreeNode root, final String node_id) {
 
-        Enumeration e = root.depthFirstEnumeration();
+        final Enumeration e = root.depthFirstEnumeration();
 
         while (e.hasMoreElements()) {
 
-            MegaMutableTreeNode node = (MegaMutableTreeNode) e.nextElement();
+            final MegaMutableTreeNode node = (MegaMutableTreeNode) e.nextElement();
 
-            HashMap<String, Object> mega_node = (HashMap<String, Object>) node.getUserObject();
+            final HashMap<String, Object> mega_node = (HashMap<String, Object>) node.getUserObject();
 
             if (mega_node.get("h").equals(node_id)) {
                 return node;
@@ -764,120 +722,120 @@ public class MiscTools {
         return null;
     }
 
-    public static DefaultMutableTreeNode sortTree(DefaultMutableTreeNode root) {
+//    public static DefaultMutableTreeNode sortTree(final DefaultMutableTreeNode root) {
+//
+//        final Enumeration e = root.depthFirstEnumeration();
+//
+//        while (e.hasMoreElements()) {
+//
+//            final DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
+//
+//            if (!node.isLeaf()) {
+//
+//                _sortTreeNode(node);
+//
+//            }
+//        }
+//
+//        return root;
+//
+//    }
 
-        Enumeration e = root.depthFirstEnumeration();
+//    private static void _sortTreeNode(final DefaultMutableTreeNode parent) {
+//
+//        final int n = parent.getChildCount();
+//
+//        final List<DefaultMutableTreeNode> children = new ArrayList<>(n);
+//
+//        for (int i = 0; i < n; i++) {
+//
+//            children.add((DefaultMutableTreeNode) parent.getChildAt(i));
+//        }
+//
+//        Collections.sort(children, TREE_NODE_COMPARATOR);
+//
+//        parent.removeAllChildren();
+//
+//        children.forEach((node) -> {
+//            parent.add(node);
+//        });
+//    }
 
-        while (e.hasMoreElements()) {
+//    public static boolean deleteSelectedTreeItems(final JTree tree) {
+//
+//        final TreePath[] paths = tree.getSelectionPaths();
+//
+//        if (paths != null) {
+//
+//            final DefaultTreeModel tree_model = (DefaultTreeModel) tree.getModel();
+//
+//            MutableTreeNode node;
+//
+//            for (final TreePath path : paths) {
+//
+//                node = (MutableTreeNode) path.getLastPathComponent();
+//
+//                if (node != null) {
+//
+//                    if (node != tree_model.getRoot()) {
+//
+//                        MutableTreeNode parent = (MutableTreeNode) node.getParent();
+//
+//                        tree_model.removeNodeFromParent(node);
+//
+//                        while (parent != null && parent.isLeaf()) {
+//
+//                            if (parent != tree_model.getRoot()) {
+//
+//                                final MutableTreeNode parent_aux = (MutableTreeNode) parent.getParent();
+//
+//                                tree_model.removeNodeFromParent(parent);
+//
+//                                parent = parent_aux;
+//
+//                            } else {
+//
+//                                parent = null;
+//                            }
+//                        }
+//
+//                    } else {
+//
+//                        final MutableTreeNode new_root;
+//
+//                        try {
+//
+//                            new_root = (MutableTreeNode) tree_model.getRoot().getClass().newInstance();
+//
+//                            tree.setModel(new DefaultTreeModel(new_root));
+//
+//                            tree.setRootVisible(new_root.getChildCount() > 0);
+//
+//                            tree.setEnabled(true);
+//
+//                        } catch (final InstantiationException | IllegalAccessException ex) {
+//                            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
+//                        }
+//
+//                        return true;
+//                    }
+//                }
+//            }
+//
+//            tree.setRootVisible(((TreeNode) tree_model.getRoot()).getChildCount() > 0);
+//            tree.setEnabled(true);
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
-
-            if (!node.isLeaf()) {
-
-                _sortTreeNode(node);
-
-            }
-        }
-
-        return root;
-
-    }
-
-    private static void _sortTreeNode(DefaultMutableTreeNode parent) {
-
-        int n = parent.getChildCount();
-
-        List<DefaultMutableTreeNode> children = new ArrayList<>(n);
-
-        for (int i = 0; i < n; i++) {
-
-            children.add((DefaultMutableTreeNode) parent.getChildAt(i));
-        }
-
-        Collections.sort(children, TREE_NODE_COMPARATOR);
-
-        parent.removeAllChildren();
-
-        children.forEach((node) -> {
-            parent.add(node);
-        });
-    }
-
-    public static boolean deleteSelectedTreeItems(JTree tree) {
-
-        TreePath[] paths = tree.getSelectionPaths();
-
-        if (paths != null) {
-
-            DefaultTreeModel tree_model = (DefaultTreeModel) tree.getModel();
-
-            MutableTreeNode node;
-
-            for (TreePath path : paths) {
-
-                node = (MutableTreeNode) path.getLastPathComponent();
-
-                if (node != null) {
-
-                    if (node != tree_model.getRoot()) {
-
-                        MutableTreeNode parent = (MutableTreeNode) node.getParent();
-
-                        tree_model.removeNodeFromParent(node);
-
-                        while (parent != null && parent.isLeaf()) {
-
-                            if (parent != tree_model.getRoot()) {
-
-                                MutableTreeNode parent_aux = (MutableTreeNode) parent.getParent();
-
-                                tree_model.removeNodeFromParent(parent);
-
-                                parent = parent_aux;
-
-                            } else {
-
-                                parent = null;
-                            }
-                        }
-
-                    } else {
-
-                        MutableTreeNode new_root;
-
-                        try {
-
-                            new_root = (MutableTreeNode) tree_model.getRoot().getClass().newInstance();
-
-                            tree.setModel(new DefaultTreeModel(new_root));
-
-                            tree.setRootVisible(new_root.getChildCount() > 0);
-
-                            tree.setEnabled(true);
-
-                        } catch (InstantiationException | IllegalAccessException ex) {
-                            Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-                        }
-
-                        return true;
-                    }
-                }
-            }
-
-            tree.setRootVisible(((TreeNode) tree_model.getRoot()).getChildCount() > 0);
-            tree.setEnabled(true);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public static boolean isDirEmpty(Path path) {
+    public static boolean isDirEmpty(final Path path) {
         if (Files.isDirectory(path)) {
-            try (DirectoryStream<Path> directory = Files.newDirectoryStream(path)) {
+            try (final DirectoryStream<Path> directory = Files.newDirectoryStream(path)) {
                 return !directory.iterator().hasNext();
-            } catch (IOException ex) {
+            } catch (final IOException ex) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -885,102 +843,103 @@ public class MiscTools {
         return false;
     }
 
-    public static boolean deleteAllExceptSelectedTreeItems(JTree tree) {
+//    public static boolean deleteAllExceptSelectedTreeItems(final JTree tree) {
+//
+//        final TreePath[] paths = tree.getSelectionPaths();
+//
+//        final HashMap<MutableTreeNode, MutableTreeNode> hashmap_old = new HashMap<>();
+//
+//        final DefaultTreeModel tree_model = (DefaultTreeModel) tree.getModel();
+//
+//        if (paths != null) {
+//
+//            final Class node_class = tree_model.getRoot().getClass();
+//
+//            Object new_root = null;
+//
+//            try {
+//
+//                new_root = node_class.getDeclaredConstructor().newInstance();
+//
+//                ((DefaultMutableTreeNode) new_root).setUserObject(((DefaultMutableTreeNode) tree_model.getRoot()).getUserObject());
+//
+//            } catch (final InstantiationException | IllegalAccessException ex) {
+//                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
+//            } catch (final NoSuchMethodException | SecurityException | IllegalArgumentException |
+//                           InvocationTargetException ex) {
+//                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//
+//            for (final TreePath path : paths) {
+//
+//                if ((MutableTreeNode) path.getLastPathComponent() != (MutableTreeNode) tree_model.getRoot()) {
+//                    Object parent = new_root;
+//
+//                    for (final Object path_element : path.getPath()) {
+//
+//                        if ((DefaultMutableTreeNode) path_element != (DefaultMutableTreeNode) tree_model.getRoot()) {
+//
+//                            if (hashmap_old.get(path_element) == null) {
+//
+//                                Object node = null;
+//
+//                                if ((DefaultMutableTreeNode) path_element == (DefaultMutableTreeNode) path.getLastPathComponent()) {
+//
+//                                    node = path_element;
+//
+//                                } else {
+//
+//                                    try {
+//
+//                                        node = node_class.newInstance();
+//
+//                                        ((DefaultMutableTreeNode) node).setUserObject(((DefaultMutableTreeNode) path_element).getUserObject());
+//
+//                                    } catch (final InstantiationException | IllegalAccessException ex) {
+//                                        Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
+//                                    }
+//                                }
+//
+//                                if (parent != null) {
+//
+//                                    ((DefaultMutableTreeNode) parent).add((DefaultMutableTreeNode) node);
+//
+//                                    if (!((TreeNode) path_element).isLeaf()) {
+//
+//                                        hashmap_old.put((DefaultMutableTreeNode) path_element, (DefaultMutableTreeNode) node);
+//
+//                                        parent = node;
+//                                    }
+//                                }
+//
+//                            } else {
+//
+//                                parent = hashmap_old.get(path_element);
+//                            }
+//                        }
+//                    }
+//
+//                } else {
+//
+//                    return false;
+//                }
+//            }
+//
+//            tree.setModel(new DefaultTreeModel(sortTree((DefaultMutableTreeNode) new_root)));
+//
+//            tree.setRootVisible(new_root != null ? ((TreeNode) new_root).getChildCount() > 0 : false);
+//
+//            tree.setEnabled(true);
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 
-        TreePath[] paths = tree.getSelectionPaths();
+    public static String truncateText(final String text, int max_length) {
 
-        HashMap<MutableTreeNode, MutableTreeNode> hashmap_old = new HashMap<>();
-
-        DefaultTreeModel tree_model = (DefaultTreeModel) tree.getModel();
-
-        if (paths != null) {
-
-            Class node_class = tree_model.getRoot().getClass();
-
-            Object new_root = null;
-
-            try {
-
-                new_root = node_class.getDeclaredConstructor().newInstance();
-
-                ((DefaultMutableTreeNode) new_root).setUserObject(((DefaultMutableTreeNode) tree_model.getRoot()).getUserObject());
-
-            } catch (InstantiationException | IllegalAccessException ex) {
-                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-            } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException ex) {
-                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            for (TreePath path : paths) {
-
-                if ((MutableTreeNode) path.getLastPathComponent() != (MutableTreeNode) tree_model.getRoot()) {
-                    Object parent = new_root;
-
-                    for (Object path_element : path.getPath()) {
-
-                        if ((DefaultMutableTreeNode) path_element != (DefaultMutableTreeNode) tree_model.getRoot()) {
-
-                            if (hashmap_old.get(path_element) == null) {
-
-                                Object node = null;
-
-                                if ((DefaultMutableTreeNode) path_element == (DefaultMutableTreeNode) path.getLastPathComponent()) {
-
-                                    node = path_element;
-
-                                } else {
-
-                                    try {
-
-                                        node = node_class.newInstance();
-
-                                        ((DefaultMutableTreeNode) node).setUserObject(((DefaultMutableTreeNode) path_element).getUserObject());
-
-                                    } catch (InstantiationException | IllegalAccessException ex) {
-                                        Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-                                    }
-                                }
-
-                                if (parent != null) {
-
-                                    ((DefaultMutableTreeNode) parent).add((DefaultMutableTreeNode) node);
-
-                                    if (!((TreeNode) path_element).isLeaf()) {
-
-                                        hashmap_old.put((DefaultMutableTreeNode) path_element, (DefaultMutableTreeNode) node);
-
-                                        parent = node;
-                                    }
-                                }
-
-                            } else {
-
-                                parent = hashmap_old.get(path_element);
-                            }
-                        }
-                    }
-
-                } else {
-
-                    return false;
-                }
-            }
-
-            tree.setModel(new DefaultTreeModel(sortTree((DefaultMutableTreeNode) new_root)));
-
-            tree.setRootVisible(new_root != null ? ((TreeNode) new_root).getChildCount() > 0 : false);
-
-            tree.setEnabled(true);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    public static String truncateText(String text, int max_length) {
-
-        String separator = " ... ";
+        final String separator = " ... ";
 
         max_length -= separator.length();
 
@@ -992,49 +951,49 @@ public class MiscTools {
         return (text.length() > max_length) ? text.replaceAll("^(.{1," + (max_length / 2) + "}).*?(.{1," + (max_length / 2) + "})$", "$1" + separator + "$2") : text;
     }
 
-    public static String cleanFilename(String filename) {
+    public static String cleanFilename(final String filename) {
 
         return (System.getProperty("os.name").toLowerCase().contains("win") ? filename.replaceAll("[<>:\"/\\\\\\|\\?\\*\t]+", "") : filename).replaceAll("\\" + File.separator, "").replaceAll("\\.\\.+", "__").replaceAll("[\\x00-\\x1F]", "").trim();
     }
 
-    public static String cleanFilePath(String path) {
+    public static String cleanFilePath(final String path) {
 
         return !path.equals(".") ? ((System.getProperty("os.name").toLowerCase().contains("win") ? path.replaceAll("[<>:\"\\|\\?\\*\t]+", "") : path).replaceAll(" +\\" + File.separator, "\\" + File.separator).replaceAll("\\.\\.+", "__").replaceAll("[\\x00-\\x1F]", "").trim()) : path;
     }
 
-    public static byte[] genRandomByteArray(int length) {
+    public static byte[] genRandomByteArray(final int length) {
 
-        byte[] the_array = new byte[length];
+        final byte[] the_array = new byte[length];
 
-        Random randomno = new Random();
+        final Random randomno = new Random();
 
         randomno.nextBytes(the_array);
 
         return the_array;
     }
 
-    public static String extractStringFromClipboardContents(Transferable contents) {
-
-        String ret = null;
-
-        if (contents != null) {
-
-            try {
-
-                Object o = contents.getTransferData(DataFlavor.stringFlavor);
-
-                if (o instanceof String) {
-
-                    ret = (String) o;
-                }
-
-            } catch (Exception ex) {
-            }
-        }
-
-        return ret;
-
-    }
+//    public static String extractStringFromClipboardContents(final Transferable contents) {
+//
+//        String ret = null;
+//
+//        if (contents != null) {
+//
+//            try {
+//
+//                final Object o = contents.getTransferData(DataFlavor.stringFlavor);
+//
+//                if (o instanceof String) {
+//
+//                    ret = (String) o;
+//                }
+//
+//            } catch (final Exception ex) {
+//            }
+//        }
+//
+//        return ret;
+//
+//    }
 
     public static String extractMegaLinksFromString(String data) {
 
@@ -1046,38 +1005,39 @@ public class MiscTools {
                 data = extensionURL2NormalLink(data);
             }
 
-            ArrayList<String> links = new ArrayList<>();
+            final ArrayList<String> links = new ArrayList<>();
             String url_decoded;
             try {
                 url_decoded = URLDecoder.decode(data, "UTF-8");
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 url_decoded = data;
             }
-            ArrayList<String> base64_chunks = findAllRegex("[A-Za-z0-9+/_-]+=*", url_decoded, 0);
+            final ArrayList<String> base64_chunks = findAllRegex("[A-Za-z0-9+/_-]+=*", url_decoded, 0);
             if (!base64_chunks.isEmpty()) {
 
-                for (String chunk : base64_chunks) {
+                for (final String chunk : base64_chunks) {
 
                     try {
 
-                        String clean_data = MiscTools.newMegaLinks2Legacy(new String(Base64.getDecoder().decode(chunk)));
+                        final String clean_data = MiscTools.newMegaLinks2Legacy(new String(Base64.getDecoder().decode(chunk)));
 
-                        String decoded = MiscTools.findFirstRegex("(?:https?|mega)://[^\r\n]+(#[^\r\n!]*?)?![^\r\n!]+![^\\?\r\n/]+", clean_data, 0);
+                        final String decoded = MiscTools.findFirstRegex("(?:https?|mega)://[^\r\n]+(#[^\r\n!]*?)?![^\r\n!]+![^\\?\r\n/]+", clean_data, 0);
 
                         if (decoded != null) {
                             links.add(decoded);
                         }
 
-                    } catch (Exception e) {
-                    };
+                    } catch (final Exception e) {
+                    }
+                    ;
                 }
             }
             try {
                 url_decoded = URLDecoder.decode(data, "UTF-8");
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 url_decoded = data;
             }
-            String clean_data = MiscTools.newMegaLinks2Legacy(url_decoded);
+            final String clean_data = MiscTools.newMegaLinks2Legacy(url_decoded);
             links.addAll(findAllRegex("(?:https?|mega)://[^\r\n]+(#[^\r\n!]*?)?![^\r\n!]+![^\\?\r\n/]+", clean_data, 0));
             links.addAll(findAllRegex("mega://e(n|l)c[^\r\n]+", clean_data, 0));
             res = links.stream().map((s) -> s + "\n").reduce(res, String::concat);
@@ -1086,16 +1046,16 @@ public class MiscTools {
         return res.trim();
     }
 
-    public static String extractFirstMegaLinkFromString(String data) {
+    public static String extractFirstMegaLinkFromString(final String data) {
 
         String res = "";
 
         if (data != null) {
 
             try {
-                String clean_data = MiscTools.newMegaLinks2Legacy(URLDecoder.decode(data, "UTF-8"));
+                final String clean_data = MiscTools.newMegaLinks2Legacy(URLDecoder.decode(data, "UTF-8"));
 
-                ArrayList<String> links = findAllRegex("(?:https?|mega)://[^\r\n]+(#[^\r\n!]*?)?![^\r\n!]+![^\\?\r\n/]+", clean_data, 0);
+                final ArrayList<String> links = findAllRegex("(?:https?|mega)://[^\r\n]+(#[^\r\n!]*?)?![^\r\n!]+![^\\?\r\n/]+", clean_data, 0);
 
                 links.addAll(findAllRegex("mega://e(n|l)c[^\r\n]+", clean_data, 0));
 
@@ -1103,7 +1063,7 @@ public class MiscTools {
 
                     res = links.get(0);
                 }
-            } catch (UnsupportedEncodingException ex) {
+            } catch (final UnsupportedEncodingException ex) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
             }
         }
@@ -1111,7 +1071,7 @@ public class MiscTools {
         return res;
     }
 
-    public static boolean checkMegaDownloadUrl(String string_url) {
+    public static boolean checkMegaDownloadUrl(final String string_url) {
 
         if (string_url == null || "".equals(string_url)) {
             return false;
@@ -1125,15 +1085,15 @@ public class MiscTools {
 
         boolean smart_proxy_socks = false;
 
-        ArrayList<String> excluded_proxy_list = new ArrayList<>();
+        final ArrayList<String> excluded_proxy_list = new ArrayList<>();
 
         do {
 
-            SmartMegaProxyManager proxy_manager = MainPanel.getProxy_manager();
+            final SmartMegaProxyManager proxy_manager = MainPanel.getProxy_manager();
 
             if (MainPanel.isUse_smart_proxy() && proxy_manager != null && proxy_manager.isForce_smart_proxy()) {
 
-                String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
+                final String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
 
                 current_smart_proxy = smart_proxy[0];
 
@@ -1143,7 +1103,7 @@ public class MiscTools {
 
             try {
 
-                URL url = new URL(string_url + "/0-0");
+                final URL url = new URL(string_url + "/0-0");
 
                 if ((current_smart_proxy != null || http_error == 509) && MainPanel.isUse_smart_proxy() && proxy_manager != null && !MainPanel.isUse_proxy()) {
 
@@ -1151,7 +1111,7 @@ public class MiscTools {
 
                         proxy_manager.blockProxy(current_smart_proxy, "HTTP " + String.valueOf(http_error));
 
-                        String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
+                        final String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
 
                         current_smart_proxy = smart_proxy[0];
 
@@ -1159,7 +1119,7 @@ public class MiscTools {
 
                     } else if (current_smart_proxy == null) {
 
-                        String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
+                        final String[] smart_proxy = proxy_manager.getProxy(excluded_proxy_list);
 
                         current_smart_proxy = smart_proxy[0];
 
@@ -1168,9 +1128,9 @@ public class MiscTools {
 
                     if (current_smart_proxy != null) {
 
-                        String[] proxy_info = current_smart_proxy.split(":");
+                        final String[] proxy_info = current_smart_proxy.split(":");
 
-                        Proxy proxy = new Proxy(smart_proxy_socks ? Proxy.Type.SOCKS : Proxy.Type.HTTP, new InetSocketAddress(proxy_info[0], Integer.parseInt(proxy_info[1])));
+                        final Proxy proxy = new Proxy(smart_proxy_socks ? Proxy.Type.SOCKS : Proxy.Type.HTTP, new InetSocketAddress(proxy_info[0], Integer.parseInt(proxy_info[1])));
 
                         con = (HttpURLConnection) url.openConnection(proxy);
 
@@ -1223,7 +1183,7 @@ public class MiscTools {
                     http_error = 0;
                 }
 
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
             } finally {
 
@@ -1245,7 +1205,7 @@ public class MiscTools {
 
         try {
 
-            URL url_api = new URL("http://whatismyip.akamai.com/");
+            final URL url_api = new URL("http://whatismyip.akamai.com/");
 
             if (MainPanel.isUse_proxy()) {
 
@@ -1262,9 +1222,9 @@ public class MiscTools {
 
             con.setUseCaches(false);
 
-            try (InputStream is = con.getInputStream(); ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
+            try (final InputStream is = con.getInputStream(); final ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
 
-                byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
+                final byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
 
                 int reads;
 
@@ -1276,9 +1236,9 @@ public class MiscTools {
                 public_ip = new String(byte_res.toByteArray(), "UTF-8");
             }
 
-        } catch (MalformedURLException ex) {
+        } catch (final MalformedURLException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
         } finally {
             if (con != null) {
@@ -1289,11 +1249,11 @@ public class MiscTools {
         return public_ip;
     }
 
-    public static String checkNewVersion(String url) {
+    public static String checkNewVersion(final String url) {
 
         String new_version_major = null, new_version_minor = null, current_version_major = null, current_version_minor = null;
 
-        URL mb_url;
+        final URL mb_url;
 
         HttpURLConnection con = null;
 
@@ -1316,9 +1276,9 @@ public class MiscTools {
 
             con.setUseCaches(false);
 
-            try (InputStream is = con.getInputStream(); ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
+            try (final InputStream is = con.getInputStream(); final ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
 
-                byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
+                final byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
 
                 int reads;
 
@@ -1327,9 +1287,9 @@ public class MiscTools {
                     byte_res.write(buffer, 0, reads);
                 }
 
-                String latest_version_res = new String(byte_res.toByteArray(), "UTF-8");
+                final String latest_version_res = new String(byte_res.toByteArray(), "UTF-8");
 
-                String latest_version = findFirstRegex("releases\\/tag\\/v?([0-9]+\\.[0-9]+)", latest_version_res, 1);
+                final String latest_version = findFirstRegex("releases\\/tag\\/v?([0-9]+\\.[0-9]+)", latest_version_res, 1);
 
                 new_version_major = findFirstRegex("([0-9]+)\\.[0-9]+", latest_version, 1);
 
@@ -1346,9 +1306,9 @@ public class MiscTools {
                 }
             }
 
-        } catch (MalformedURLException ex) {
+        } catch (final MalformedURLException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
         } finally {
             if (con != null) {
@@ -1360,30 +1320,30 @@ public class MiscTools {
     }
 
     public static void openBrowserURL(final String url) {
-        THREAD_POOL.execute(() -> {
-            try {
-                Logger.getLogger(MiscTools.class.getName()).log(Level.INFO, "Trying to open URL in external browser: {0}", url);
-
-                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                    Desktop.getDesktop().browse(new URI(url));
-                    return;
-                }
-                if (System.getProperty("os.name").toLowerCase().contains("nux")) {
-                    Process p = Runtime.getRuntime().exec(new String[]{"xdg-open", url});
-                    p.waitFor();
-                    p.destroy();
-                    return;
-                }
-                Logger.getLogger(MiscTools.class.getName()).log(Level.WARNING, "Unable to open URL: Unsupported platform.", url);
-            } catch (Exception ex) {
-                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
-            }
-        });
+//        THREAD_POOL.execute(() -> {
+//            try {
+//                Logger.getLogger(MiscTools.class.getName()).log(Level.INFO, "Trying to open URL in external browser: {0}", url);
+//
+//                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+//                    Desktop.getDesktop().browse(new URI(url));
+//                    return;
+//                }
+//                if (System.getProperty("os.name").toLowerCase().contains("nux")) {
+//                    final Process p = Runtime.getRuntime().exec(new String[]{"xdg-open", url});
+//                    p.waitFor();
+//                    p.destroy();
+//                    return;
+//                }
+//                Logger.getLogger(MiscTools.class.getName()).log(Level.WARNING, "Unable to open URL: Unsupported platform.", url);
+//            } catch (final Exception ex) {
+//                Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
+//            }
+//        });
     }
 
-    public static byte[] recReverseArray(byte[] arr, int start, int end) {
+    public static byte[] recReverseArray(final byte[] arr, final int start, final int end) {
 
-        byte temp;
+        final byte temp;
 
         if (start < end) {
             temp = arr[start];
@@ -1401,13 +1361,13 @@ public class MiscTools {
 
     public static String getCurrentJarParentPath() {
         try {
-            CodeSource codeSource = MainPanel.class.getProtectionDomain().getCodeSource();
+            final CodeSource codeSource = MainPanel.class.getProtectionDomain().getCodeSource();
 
-            File jarFile = new File(codeSource.getLocation().toURI().getPath());
+            final File jarFile = new File(codeSource.getLocation().toURI().getPath());
 
             return jarFile.getParentFile().getAbsolutePath();
 
-        } catch (URISyntaxException ex) {
+        } catch (final URISyntaxException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, null, ex);
         }
 
@@ -1416,7 +1376,7 @@ public class MiscTools {
 
     public static void restartApplication() {
 
-        StringBuilder cmd = new StringBuilder();
+        final StringBuilder cmd = new StringBuilder();
 
         cmd.append(System.getProperty("java.home")).append(File.separator).append("bin").append(File.separator).append("java ");
 
@@ -1430,7 +1390,7 @@ public class MiscTools {
 
         try {
             Runtime.getRuntime().exec(cmd.toString());
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MiscTools.class.getName()).log(Level.SEVERE, ex.getMessage());
         }
 
@@ -1440,7 +1400,7 @@ public class MiscTools {
     /*
         Thanks -> https://stackoverflow.com/a/26884326
      */
-    public static int naturalCompare(String a, String b, boolean ignoreCase) {
+    public static int naturalCompare(String a, String b, final boolean ignoreCase) {
 
         if (a == null) {
             a = "";
@@ -1454,9 +1414,9 @@ public class MiscTools {
             a = a.toLowerCase();
             b = b.toLowerCase();
         }
-        int aLength = a.length();
-        int bLength = b.length();
-        int minSize = Math.min(aLength, bLength);
+        final int aLength = a.length();
+        final int bLength = b.length();
+        final int minSize = Math.min(aLength, bLength);
         char aChar, bChar;
         boolean aNumber, bNumber;
         boolean asNumeric = false;
@@ -1509,11 +1469,11 @@ public class MiscTools {
         }
     }
 
-    public static MegaAPI checkMegaAccountLoginAndShowMasterPassDialog(MainPanel main_panel, Container container, String email) throws Exception {
+    public static MegaAPI checkMegaAccountLoginAndShowMasterPassDialog(final MainPanel main_panel, final String email) throws Exception {
 
-        boolean remember_master_pass = true;
+        final boolean remember_master_pass = true;
 
-        HashMap<String, Object> account_info = (HashMap) main_panel.getMega_accounts().get(email);
+        final HashMap<String, Object> account_info = (HashMap) main_panel.getMega_accounts().get(email);
 
         MegaAPI ma = main_panel.getMega_active_accounts().get(email);
 
@@ -1521,47 +1481,48 @@ public class MiscTools {
 
             ma = new MegaAPI();
 
-            String password_aes, user_hash;
+            final String password_aes;
+            final String user_hash;
             synchronized (PASS_LOCK) {
 
                 if (main_panel.getMaster_pass_hash() != null) {
 
-                    if (main_panel.getMaster_pass() == null) {
+//                    if (main_panel.getMaster_pass() == null) {
+//
+//                        GetMasterPasswordDialog pdialog = new GetMasterPasswordDialog((Frame) container.getParent(), true, main_panel.getMaster_pass_hash(), main_panel.getMaster_pass_salt(), main_panel);
+//
+//                        pdialog.setLocationRelativeTo(container);
+//
+//                        pdialog.setVisible(true);
+//
+//                        if (pdialog.isPass_ok()) {
+//
+//                            main_panel.setMaster_pass(pdialog.getPass());
+//
+//                            pdialog.deletePass();
+//
+//                            remember_master_pass = pdialog.getRemember_checkbox().isSelected();
+//
+//                            pdialog.dispose();
+//
+//                            password_aes = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("password_aes")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
+//
+//                            user_hash = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("user_hash")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
+//
+//                        } else {
+//
+//                            pdialog.dispose();
+//
+//                            return null;
+//                        }
+//
+//                    } else {
 
-                        GetMasterPasswordDialog pdialog = new GetMasterPasswordDialog((Frame) container.getParent(), true, main_panel.getMaster_pass_hash(), main_panel.getMaster_pass_salt(), main_panel);
+                    password_aes = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("password_aes")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
 
-                        pdialog.setLocationRelativeTo(container);
+                    user_hash = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("user_hash")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
 
-                        pdialog.setVisible(true);
-
-                        if (pdialog.isPass_ok()) {
-
-                            main_panel.setMaster_pass(pdialog.getPass());
-
-                            pdialog.deletePass();
-
-                            remember_master_pass = pdialog.getRemember_checkbox().isSelected();
-
-                            pdialog.dispose();
-
-                            password_aes = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("password_aes")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
-
-                            user_hash = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("user_hash")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
-
-                        } else {
-
-                            pdialog.dispose();
-
-                            return null;
-                        }
-
-                    } else {
-
-                        password_aes = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("password_aes")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
-
-                        user_hash = Bin2BASE64(CryptTools.aes_cbc_decrypt_pkcs7(BASE642Bin((String) account_info.get("user_hash")), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
-
-                    }
+//                    }
 
                 } else {
 
@@ -1572,7 +1533,7 @@ public class MiscTools {
 
                 try {
 
-                    HashMap<String, Object> old_session_data = DBTools.selectMegaSession(email);
+                    final HashMap<String, Object> old_session_data = DBTools.selectMegaSession(email);
 
                     boolean unserialization_error = false;
 
@@ -1584,23 +1545,23 @@ public class MiscTools {
 
                         if ((boolean) old_session_data.get("crypt")) {
 
-                            ByteArrayInputStream bs = new ByteArrayInputStream(CryptTools.aes_cbc_decrypt_pkcs7((byte[]) old_session_data.get("ma"), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
+                            final ByteArrayInputStream bs = new ByteArrayInputStream(CryptTools.aes_cbc_decrypt_pkcs7((byte[]) old_session_data.get("ma"), main_panel.getMaster_pass(), CryptTools.AES_ZERO_IV));
 
-                            try (ObjectInputStream is = new ObjectInputStream(bs)) {
+                            try (final ObjectInputStream is = new ObjectInputStream(bs)) {
 
                                 old_ma = (MegaAPI) is.readObject();
 
-                            } catch (Exception ex) {
+                            } catch (final Exception ex) {
                                 unserialization_error = true;
                             }
 
                         } else {
 
-                            ByteArrayInputStream bs = new ByteArrayInputStream((byte[]) old_session_data.get("ma"));
+                            final ByteArrayInputStream bs = new ByteArrayInputStream((byte[]) old_session_data.get("ma"));
 
-                            try (ObjectInputStream is = new ObjectInputStream(bs)) {
+                            try (final ObjectInputStream is = new ObjectInputStream(bs)) {
                                 old_ma = (MegaAPI) is.readObject();
-                            } catch (Exception ex) {
+                            } catch (final Exception ex) {
                                 unserialization_error = true;
                             }
 
@@ -1618,28 +1579,28 @@ public class MiscTools {
 
                     if (old_session_data == null || unserialization_error) {
 
-                        String pincode = null;
+                        final String pincode = null;
 
-                        if (ma.check2FA(email)) {
-
-                            Get2FACode dialog = new Get2FACode((Frame) container.getParent(), true, email, main_panel);
-
-                            dialog.setLocationRelativeTo(container);
-
-                            dialog.setVisible(true);
-
-                            if (dialog.isCode_ok()) {
-                                pincode = dialog.getPin_code();
-                            } else {
-                                throw new MegaAPIException(-26);
-                            }
-                        }
+//                        if (ma.check2FA(email)) {
+//
+//                            Get2FACode dialog = new Get2FACode((Frame) container.getParent(), true, email, main_panel);
+//
+//                            dialog.setLocationRelativeTo(container);
+//
+//                            dialog.setVisible(true);
+//
+//                            if (dialog.isCode_ok()) {
+//                                pincode = dialog.getPin_code();
+//                            } else {
+//                                throw new MegaAPIException(-26);
+//                            }
+//                        }
 
                         ma.fastLogin(email, bin2i32a(BASE642Bin(password_aes)), user_hash, pincode);
 
-                        ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                        final ByteArrayOutputStream bs = new ByteArrayOutputStream();
 
-                        try (ObjectOutputStream os = new ObjectOutputStream(bs)) {
+                        try (final ObjectOutputStream os = new ObjectOutputStream(bs)) {
                             os.writeObject(ma);
                         }
 
@@ -1655,11 +1616,11 @@ public class MiscTools {
 
                     main_panel.getMega_active_accounts().put(email, ma);
 
-                } catch (MegaAPIException exception) {
+                } catch (final MegaAPIException exception) {
 
-                    if (exception.getCode() == -6) {
-                        JOptionPane.showMessageDialog(container.getParent(), LabelTranslatorSingleton.getInstance().translate("You've tried to login too many times. Wait an hour."), "Error", JOptionPane.ERROR_MESSAGE);
-                    }
+//                    if (exception.getCode() == -6) {
+//                        JOptionPane.showMessageDialog(container.getParent(), LabelTranslatorSingleton.getInstance().translate("You've tried to login too many times. Wait an hour."), "Error", JOptionPane.ERROR_MESSAGE);
+//                    }
 
                     throw exception;
                 }
@@ -1687,21 +1648,21 @@ public class MiscTools {
         return data.replaceAll("(?:https://)?mega(?:\\.co)?\\.nz/folder/([^#]+)#([^\r\n]+)", "https://mega.nz/#F!$1!$2").replaceAll("(?:https://)?mega(?:\\.co)?\\.nz/file/([^#]+)#([^\r\n]+)", "https://mega.nz/#!$1!$2");
     }
 
-    public static String addHTTPSToMegaLinks(String data) {
+    public static String addHTTPSToMegaLinks(final String data) {
 
         return data.replaceAll("(?<!https?://)mega(?:\\.co)?\\.nz", "https://mega.nz");
     }
 
-    public static String addBackSlashToLinks(String data) {
+    public static String addBackSlashToLinks(final String data) {
 
         return data.replaceAll("https?://", "\n$0");
     }
 
     /* This method changes the MEGA extension URL to a ordinary MEGA URL,
     so copying the extension URL from Firefox or Chrome also works as a normal URL */
-    public static String extensionURL2NormalLink(String data) {
+    public static String extensionURL2NormalLink(final String data) {
 
-        String toReplace = data.substring(0, data.indexOf('#') + 1);
+        final String toReplace = data.substring(0, data.indexOf('#') + 1);
 
         return data.replace(toReplace, "https://mega.nz");
     }

@@ -9,13 +9,9 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.GUI_FONT;
-import static com.tonikelope.megabasterd.MiscTools.translateLabels;
-import static com.tonikelope.megabasterd.MiscTools.updateFonts;
 import java.util.logging.Logger;
 
 /**
- *
  * @author tonikelope
  */
 public class WarningExitMessage extends javax.swing.JDialog {
@@ -26,20 +22,20 @@ public class WarningExitMessage extends javax.swing.JDialog {
     /**
      * Creates new form WarningExitMessage
      */
-    public WarningExitMessage(java.awt.Frame parent, boolean modal, MainPanel main_panel, boolean restart) {
+    public WarningExitMessage(final java.awt.Frame parent, final boolean modal, final MainPanel main_panel, final boolean restart) {
         super(parent, modal);
         MiscTools.GUIRunAndWait(() -> {
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
+//            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
+//
+//            translateLabels(this);
 
-            translateLabels(this);
+            this._main_panel = main_panel;
 
-            _main_panel = main_panel;
+            this._restart = restart;
 
-            _restart = restart;
-
-            pack();
+            this.pack();
         });
     }
 
@@ -52,76 +48,77 @@ public class WarningExitMessage extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jPanel1 = new javax.swing.JPanel();
-        warning_label = new javax.swing.JLabel();
-        exit_button = new javax.swing.JButton();
+        this.jPanel1 = new javax.swing.JPanel();
+        this.warning_label = new javax.swing.JLabel();
+        this.exit_button = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-        setTitle("Exit");
-        setUndecorated(true);
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.setTitle("Exit");
+        this.setUndecorated(true);
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
+        this.jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        warning_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        warning_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-error-96.png"))); // NOI18N
-        warning_label.setText("Megabasterd is stopping transferences safely, please wait...");
+        this.warning_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.warning_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-error-96.png"))); // NOI18N
+        this.warning_label.setText("Megabasterd is stopping transferences safely, please wait...");
 
-        exit_button.setBackground(new java.awt.Color(255, 0, 0));
-        exit_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        exit_button.setForeground(new java.awt.Color(255, 255, 255));
-        exit_button.setText("EXIT NOW");
-        exit_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                exit_buttonActionPerformed(evt);
+        this.exit_button.setBackground(new java.awt.Color(255, 0, 0));
+        this.exit_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.exit_button.setForeground(new java.awt.Color(255, 255, 255));
+        this.exit_button.setText("EXIT NOW");
+        this.exit_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                WarningExitMessage.this.exit_buttonActionPerformed(evt);
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
+        final javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(this.jPanel1);
+        this.jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(exit_button))
-                    .addComponent(warning_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(this.exit_button))
+                                        .addComponent(this.warning_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(warning_label, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(exit_button)
-                .addContainerGap())
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.warning_label, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.exit_button)
+                                .addContainerGap())
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void exit_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exit_buttonActionPerformed
+    private void exit_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exit_buttonActionPerformed
 
-        _main_panel.byebyenow(_restart);
+        this._main_panel.byebyenow(this._restart);
     }//GEN-LAST:event_exit_buttonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

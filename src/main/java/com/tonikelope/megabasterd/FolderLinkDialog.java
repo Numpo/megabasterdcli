@@ -9,9 +9,10 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Dialog;
+import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,16 +20,15 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
-import javax.swing.JComponent;
-import javax.swing.JOptionPane;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MiscTools.cleanFilePath;
+import static com.tonikelope.megabasterd.MiscTools.findFirstRegex;
+import static com.tonikelope.megabasterd.MiscTools.formatBytes;
+import static java.util.logging.Level.SEVERE;
 
 /**
- *
  * @author tonikelope
  */
 public class FolderLinkDialog extends javax.swing.JDialog {
@@ -49,20 +49,20 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
     @Override
     public void dispose() {
-        file_tree.setModel(null);
+        this.file_tree.setModel(null);
         super.dispose();
     }
 
     public List<HashMap> getDownload_links() {
-        return Collections.unmodifiableList(_download_links);
+        return Collections.unmodifiableList(this._download_links);
     }
 
     public boolean isDownload() {
-        return _download;
+        return this._download;
     }
 
     public int isMega_error() {
-        return _mega_error;
+        return this._mega_error;
     }
 
     /**
@@ -71,62 +71,62 @@ public class FolderLinkDialog extends javax.swing.JDialog {
      * @param parent
      * @param link
      */
-    public FolderLinkDialog(MainPanelView parent, boolean modal, String link) {
+    public FolderLinkDialog(final MainPanelView parent, final boolean modal, final String link) {
 
         super(parent, modal);
 
-        _mega_error = 0;
-        _total_space = 0L;
-        _download = false;
-        _download_links = new ArrayList<>();
-        _link = link;
+        this._mega_error = 0;
+        this._total_space = 0L;
+        this._download = false;
+        this._download_links = new ArrayList<>();
+        this._link = link;
 
         MiscTools.GUIRunAndWait(() -> {
 
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, parent.getMain_panel().getZoom_factor());
+//            updateFonts(this, GUI_FONT, parent.getMain_panel().getZoom_factor());
+//
+//            translateLabels(this);
 
-            translateLabels(this);
+            this.file_tree.setRootVisible(false);
 
-            file_tree.setRootVisible(false);
+            this.node_bar.setIndeterminate(true);
 
-            node_bar.setIndeterminate(true);
+            this.folder_link_label.setText(link);
 
-            folder_link_label.setText(link);
-
-            restore_button.setVisible(false);
+            this.restore_button.setVisible(false);
 
             final Dialog tthis = this;
 
             THREAD_POOL.execute(() -> {
-                _loadMegaDirTree();
+                this._loadMegaDirTree();
 
-                if (_mega_error == 0) {
+                if (this._mega_error == 0) {
 
-                    _genDownloadLiks();
+                    this._genDownloadLiks();
 
                     MiscTools.GUIRun(() -> {
 
-                        dance_button.setText(LabelTranslatorSingleton.getInstance().translate("Let's dance, baby"));
+                        this.dance_button.setText(LabelTranslatorSingleton.getInstance().translate("Let's dance, baby"));
 
-                        pack();
+                        this.pack();
                     });
 
-                } else if (_mega_error == -18) {
+                } else if (this._mega_error == -18) {
 
                     MiscTools.GUIRun(() -> {
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("MEGA FOLDER TEMPORARILY UNAVAILABLE!"), "Error", JOptionPane.ERROR_MESSAGE);
 
-                        setVisible(false);
+                        this.setVisible(false);
                     });
 
-                } else if (_mega_error == -16) {
+                } else if (this._mega_error == -16) {
 
                     MiscTools.GUIRun(() -> {
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("MEGA FOLDER BLOCKED/DELETED"), "Error", JOptionPane.ERROR_MESSAGE);
 
-                        setVisible(false);
+                        this.setVisible(false);
                     });
 
                 } else {
@@ -134,12 +134,12 @@ public class FolderLinkDialog extends javax.swing.JDialog {
                     MiscTools.GUIRun(() -> {
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("MEGA FOLDER LINK ERROR!"), "Error", JOptionPane.ERROR_MESSAGE);
 
-                        setVisible(false);
+                        this.setVisible(false);
                     });
                 }
             });
 
-            pack();
+            this.pack();
 
         });
     }
@@ -153,274 +153,279 @@ public class FolderLinkDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        file_tree_scrollpane = new javax.swing.JScrollPane();
-        skip_button = new javax.swing.JButton();
-        link_detected_label = new javax.swing.JLabel();
-        dance_button = new javax.swing.JButton();
-        folder_link_label = new javax.swing.JLabel();
-        warning_label = new javax.swing.JLabel();
-        skip_rest_button = new javax.swing.JButton();
-        restore_button = new javax.swing.JButton();
-        total_space_label = new javax.swing.JLabel();
-        node_bar = new javax.swing.JProgressBar();
+        this.file_tree_scrollpane = new javax.swing.JScrollPane();
+        this.skip_button = new javax.swing.JButton();
+        this.link_detected_label = new javax.swing.JLabel();
+        this.dance_button = new javax.swing.JButton();
+        this.folder_link_label = new javax.swing.JLabel();
+        this.warning_label = new javax.swing.JLabel();
+        this.skip_rest_button = new javax.swing.JButton();
+        this.restore_button = new javax.swing.JButton();
+        this.total_space_label = new javax.swing.JLabel();
+        this.node_bar = new javax.swing.JProgressBar();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
-        setTitle("FolderLink");
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        this.setTitle("FolderLink");
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(final java.awt.event.WindowEvent evt) {
+                FolderLinkDialog.this.formWindowClosing(evt);
             }
         });
 
-        file_tree.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
-        file_tree.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
-        file_tree.setDoubleBuffered(true);
-        file_tree.setEnabled(false);
-        file_tree_scrollpane.setViewportView(file_tree);
+        this.file_tree.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        final javax.swing.tree.DefaultMutableTreeNode treeNode1 = new javax.swing.tree.DefaultMutableTreeNode("root");
+        this.file_tree.setModel(new javax.swing.tree.DefaultTreeModel(treeNode1));
+        this.file_tree.setDoubleBuffered(true);
+        this.file_tree.setEnabled(false);
+        this.file_tree_scrollpane.setViewportView(this.file_tree);
 
-        skip_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        skip_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-trash-can-30.png"))); // NOI18N
-        skip_button.setText("REMOVE THIS");
-        skip_button.setDoubleBuffered(true);
-        skip_button.setEnabled(false);
-        skip_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skip_buttonActionPerformed(evt);
+        this.skip_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.skip_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-trash-can-30.png"))); // NOI18N
+        this.skip_button.setText("REMOVE THIS");
+        this.skip_button.setDoubleBuffered(true);
+        this.skip_button.setEnabled(false);
+        this.skip_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                FolderLinkDialog.this.skip_buttonActionPerformed(evt);
             }
         });
 
-        link_detected_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        link_detected_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-folder-30.png"))); // NOI18N
-        link_detected_label.setText("Folder link detected!");
-        link_detected_label.setDoubleBuffered(true);
+        this.link_detected_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        this.link_detected_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-folder-30.png"))); // NOI18N
+        this.link_detected_label.setText("Folder link detected!");
+        this.link_detected_label.setDoubleBuffered(true);
 
-        dance_button.setBackground(new java.awt.Color(102, 204, 255));
-        dance_button.setFont(new java.awt.Font("Dialog", 1, 22)); // NOI18N
-        dance_button.setForeground(new java.awt.Color(255, 255, 255));
-        dance_button.setText("Loading...");
-        dance_button.setDoubleBuffered(true);
-        dance_button.setEnabled(false);
-        dance_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dance_buttonActionPerformed(evt);
+        this.dance_button.setBackground(new java.awt.Color(102, 204, 255));
+        this.dance_button.setFont(new java.awt.Font("Dialog", 1, 22)); // NOI18N
+        this.dance_button.setForeground(new java.awt.Color(255, 255, 255));
+        this.dance_button.setText("Loading...");
+        this.dance_button.setDoubleBuffered(true);
+        this.dance_button.setEnabled(false);
+        this.dance_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                FolderLinkDialog.this.dance_buttonActionPerformed(evt);
             }
         });
 
-        folder_link_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        folder_link_label.setText("jLabel2");
-        folder_link_label.setDoubleBuffered(true);
+        this.folder_link_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.folder_link_label.setText("jLabel2");
+        this.folder_link_label.setDoubleBuffered(true);
 
-        warning_label.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        warning_label.setText("If you DO NOT want to transfer some folder or file you can REMOVE it (to select several items at the same time use CTRL + LMOUSE).");
-        warning_label.setDoubleBuffered(true);
-        warning_label.setEnabled(false);
+        this.warning_label.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.warning_label.setText("If you DO NOT want to transfer some folder or file you can REMOVE it (to select several items at the same time use CTRL + LMOUSE).");
+        this.warning_label.setDoubleBuffered(true);
+        this.warning_label.setEnabled(false);
 
-        skip_rest_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        skip_rest_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-trash-can-30.png"))); // NOI18N
-        skip_rest_button.setText("REMOVE ALL EXCEPT THIS");
-        skip_rest_button.setDoubleBuffered(true);
-        skip_rest_button.setEnabled(false);
-        skip_rest_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skip_rest_buttonActionPerformed(evt);
+        this.skip_rest_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.skip_rest_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-trash-can-30.png"))); // NOI18N
+        this.skip_rest_button.setText("REMOVE ALL EXCEPT THIS");
+        this.skip_rest_button.setDoubleBuffered(true);
+        this.skip_rest_button.setEnabled(false);
+        this.skip_rest_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                FolderLinkDialog.this.skip_rest_buttonActionPerformed(evt);
             }
         });
 
-        restore_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        restore_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-undelete-30.png"))); // NOI18N
-        restore_button.setText("Restore folder data");
-        restore_button.setDoubleBuffered(true);
-        restore_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                restore_buttonActionPerformed(evt);
+        this.restore_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        this.restore_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-undelete-30.png"))); // NOI18N
+        this.restore_button.setText("Restore folder data");
+        this.restore_button.setDoubleBuffered(true);
+        this.restore_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                FolderLinkDialog.this.restore_buttonActionPerformed(evt);
             }
         });
 
-        total_space_label.setFont(new java.awt.Font("Dialog", 1, 32)); // NOI18N
-        total_space_label.setForeground(new java.awt.Color(0, 0, 255));
-        total_space_label.setText("[---]");
-        total_space_label.setDoubleBuffered(true);
-        total_space_label.setEnabled(false);
+        this.total_space_label.setFont(new java.awt.Font("Dialog", 1, 32)); // NOI18N
+        this.total_space_label.setForeground(new java.awt.Color(0, 0, 255));
+        this.total_space_label.setText("[---]");
+        this.total_space_label.setDoubleBuffered(true);
+        this.total_space_label.setEnabled(false);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(link_detected_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(folder_link_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(29, 29, 29)
-                        .addComponent(restore_button))
-                    .addComponent(node_bar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(file_tree_scrollpane, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(warning_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(total_space_label, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(skip_rest_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(skip_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(dance_button)))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(this.link_detected_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.folder_link_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addGap(29, 29, 29)
+                                                .addComponent(this.restore_button))
+                                        .addComponent(this.node_bar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(this.file_tree_scrollpane, javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(this.warning_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(this.total_space_label, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.skip_rest_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.skip_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(this.dance_button)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(link_detected_label)
-                .addGap(8, 8, 8)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(folder_link_label)
-                    .addComponent(restore_button))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(file_tree_scrollpane, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(node_bar, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(total_space_label)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(skip_rest_button)
-                        .addComponent(skip_button)
-                        .addComponent(dance_button))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(warning_label)
-                        .addGap(49, 49, 49)))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.link_detected_label)
+                                .addGap(8, 8, 8)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(this.folder_link_label)
+                                        .addComponent(this.restore_button))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.file_tree_scrollpane, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.node_bar, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.total_space_label)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(this.skip_rest_button)
+                                                .addComponent(this.skip_button)
+                                                .addComponent(this.dance_button))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(this.warning_label)
+                                                .addGap(49, 49, 49)))
+                                .addContainerGap())
         );
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void skip_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skip_buttonActionPerformed
+    private void skip_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skip_buttonActionPerformed
 
-        if (deleteSelectedTreeItems(file_tree)) {
-            file_tree.setEnabled(false);
-            node_bar.setVisible(true);
-            skip_rest_button.setEnabled(false);
-            skip_button.setEnabled(false);
-            THREAD_POOL.execute(() -> {
-                MiscTools.resetTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
-                MiscTools.calculateTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
-                _genDownloadLiks();
-                MiscTools.GUIRun(() -> {
-                    restore_button.setVisible(true);
-
-                    file_tree.setEnabled(true);
-
-                    file_tree.setModel(new DefaultTreeModel((TreeNode) file_tree.getModel().getRoot()));
-
-                    boolean root_childs = ((TreeNode) file_tree.getModel().getRoot()).getChildCount() > 0;
-
-                    dance_button.setEnabled(root_childs);
-
-                    skip_button.setEnabled(root_childs);
-
-                    skip_rest_button.setEnabled(root_childs);
-                });
-            });
-
-        }
+//        if (deleteSelectedTreeItems(file_tree)) {
+//            file_tree.setEnabled(false);
+//            node_bar.setVisible(true);
+//            skip_rest_button.setEnabled(false);
+//            skip_button.setEnabled(false);
+//            THREAD_POOL.execute(() -> {
+//                MiscTools.resetTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
+//                MiscTools.calculateTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
+//                _genDownloadLiks();
+//                MiscTools.GUIRun(() -> {
+//                    restore_button.setVisible(true);
+//
+//                    file_tree.setEnabled(true);
+//
+//                    file_tree.setModel(new DefaultTreeModel((TreeNode) file_tree.getModel().getRoot()));
+//
+//                    boolean root_childs = ((TreeNode) file_tree.getModel().getRoot()).getChildCount() > 0;
+//
+//                    dance_button.setEnabled(root_childs);
+//
+//                    skip_button.setEnabled(root_childs);
+//
+//                    skip_rest_button.setEnabled(root_childs);
+//                });
+//            });
+//
+//        }
 
     }//GEN-LAST:event_skip_buttonActionPerformed
 
-    private void dance_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dance_buttonActionPerformed
+    private void dance_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dance_buttonActionPerformed
 
-        _download = true;
+        this._download = true;
 
-        dispose();
+        this.dispose();
     }//GEN-LAST:event_dance_buttonActionPerformed
 
-    private void skip_rest_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skip_rest_buttonActionPerformed
+    private void skip_rest_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skip_rest_buttonActionPerformed
 
-        if (deleteAllExceptSelectedTreeItems(file_tree)) {
-            file_tree.setEnabled(false);
-            node_bar.setVisible(true);
-            skip_rest_button.setEnabled(false);
-            skip_button.setEnabled(false);
-
-            THREAD_POOL.execute(() -> {
-
-                MiscTools.resetTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
-
-                MiscTools.calculateTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
-
-                _genDownloadLiks();
-
-                MiscTools.GUIRunAndWait(() -> {
-                    restore_button.setVisible(true);
-
-                    file_tree.setEnabled(true);
-
-                    file_tree.setModel(new DefaultTreeModel((TreeNode) file_tree.getModel().getRoot()));
-
-                    boolean root_childs = ((TreeNode) file_tree.getModel().getRoot()).getChildCount() > 0;
-
-                    dance_button.setEnabled(root_childs);
-
-                    skip_button.setEnabled(root_childs);
-
-                    skip_rest_button.setEnabled(root_childs);
-
-                });
-            });
-
-        }
+//        if (deleteAllExceptSelectedTreeItems(file_tree)) {
+//            file_tree.setEnabled(false);
+//            node_bar.setVisible(true);
+//            skip_rest_button.setEnabled(false);
+//            skip_button.setEnabled(false);
+//
+//            THREAD_POOL.execute(() -> {
+//
+//                MiscTools.resetTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
+//
+//                MiscTools.calculateTreeFolderSizes(((MegaMutableTreeNode) file_tree.getModel().getRoot()));
+//
+//                _genDownloadLiks();
+//
+//                MiscTools.GUIRunAndWait(() -> {
+//                    restore_button.setVisible(true);
+//
+//                    file_tree.setEnabled(true);
+//
+//                    file_tree.setModel(new DefaultTreeModel((TreeNode) file_tree.getModel().getRoot()));
+//
+//                    boolean root_childs = ((TreeNode) file_tree.getModel().getRoot()).getChildCount() > 0;
+//
+//                    dance_button.setEnabled(root_childs);
+//
+//                    skip_button.setEnabled(root_childs);
+//
+//                    skip_rest_button.setEnabled(root_childs);
+//
+//                });
+//            });
+//
+//        }
     }//GEN-LAST:event_skip_rest_buttonActionPerformed
 
-    private void restore_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_restore_buttonActionPerformed
+    private void restore_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_restore_buttonActionPerformed
 
-        restore_button.setText(LabelTranslatorSingleton.getInstance().translate("Restoring data, please wait..."));
+        this.restore_button.setText(LabelTranslatorSingleton.getInstance().translate("Restoring data, please wait..."));
 
-        file_tree.setEnabled(false);
+        this.file_tree.setEnabled(false);
 
-        restore_button.setEnabled(false);
+        this.restore_button.setEnabled(false);
 
-        dance_button.setEnabled(false);
+        this.dance_button.setEnabled(false);
 
-        node_bar.setVisible(true);
+        this.node_bar.setVisible(true);
 
-        node_bar.setIndeterminate(true);
+        this.node_bar.setIndeterminate(true);
 
-        skip_button.setEnabled(false);
+        this.skip_button.setEnabled(false);
 
-        skip_rest_button.setEnabled(false);
+        this.skip_rest_button.setEnabled(false);
 
         THREAD_POOL.execute(() -> {
-            _loadMegaDirTree();
-            _genDownloadLiks();
+            this._loadMegaDirTree();
+            this._genDownloadLiks();
             MiscTools.GUIRun(() -> {
-                restore_button.setVisible(false);
-                restore_button.setText(LabelTranslatorSingleton.getInstance().translate("Restore folder data"));
-                boolean root_childs = ((TreeNode) file_tree.getModel().getRoot()).getChildCount() > 0;
+                this.restore_button.setVisible(false);
+                this.restore_button.setText(LabelTranslatorSingleton.getInstance().translate("Restore folder data"));
+                final boolean root_childs = ((TreeNode) this.file_tree.getModel().getRoot()).getChildCount() > 0;
 
-                for (JComponent c : new JComponent[]{restore_button, dance_button, skip_button, skip_rest_button, file_tree}) {
+                for (final JComponent c : new JComponent[]{this.restore_button, this.dance_button, this.skip_button, this.skip_rest_button, this.file_tree}) {
 
                     c.setEnabled(root_childs);
                 }
 
-                skip_button.setEnabled(root_childs);
+                this.skip_button.setEnabled(root_childs);
 
-                skip_rest_button.setEnabled(root_childs);
+                this.skip_rest_button.setEnabled(root_childs);
             });
         });
 
     }//GEN-LAST:event_restore_buttonActionPerformed
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+    private void formWindowClosing(final java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
 
-        if (working && JOptionPane.showConfirmDialog(this, "EXIT?") == 0) {
-            dispose();
-            exit = true;
-        } else if (!working) {
-            dispose();
-            exit = true;
+        if (this.working && JOptionPane.showConfirmDialog(this, "EXIT?") == 0) {
+            this.dispose();
+            this.exit = true;
+        } else if (!this.working) {
+            this.dispose();
+            this.exit = true;
         }
     }//GEN-LAST:event_formWindowClosing
 
@@ -428,19 +433,19 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
         try {
 
-            working = true;
+            this.working = true;
 
-            HashMap<String, Object> folder_nodes;
+            final HashMap<String, Object> folder_nodes;
 
-            MegaAPI ma = new MegaAPI();
+            final MegaAPI ma = new MegaAPI();
 
-            String folder_id = findFirstRegex("#F!([^!]+)", _link, 1);
+            String folder_id = findFirstRegex("#F!([^!]+)", this._link, 1);
 
             String subfolder_id = null;
 
             if (folder_id.contains("@")) {
 
-                String[] fids = folder_id.split("@");
+                final String[] fids = folder_id.split("@");
 
                 folder_id = fids[0];
 
@@ -456,41 +461,41 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
             if (r == 0) {
                 MiscTools.GUIRun(() -> {
-                    folder_link_label.setText(_link + " (CACHED VERSION)");
+                    this.folder_link_label.setText(this._link + " (CACHED VERSION)");
                 });
             }
 
-            String folder_key = findFirstRegex("#F![^!]+!(.+)", _link, 1);
+            final String folder_key = findFirstRegex("#F![^!]+!(.+)", this._link, 1);
 
-            folder_nodes = ma.getFolderNodes(folder_id, folder_key, node_bar, (r == 0));
+            folder_nodes = ma.getFolderNodes(folder_id, folder_key, this.node_bar, (r == 0));
 
             MegaMutableTreeNode root = null;
 
             final int nodos_totales = folder_nodes.size();
 
             MiscTools.GUIRun(() -> {
-                node_bar.setIndeterminate(false);
-                node_bar.setMaximum(nodos_totales);
-                node_bar.setValue(0);
+                this.node_bar.setIndeterminate(false);
+                this.node_bar.setMaximum(nodos_totales);
+                this.node_bar.setValue(0);
             });
 
             int conta_nodo = 0;
 
-            for (Object o : folder_nodes.values()) {
+            for (final Object o : folder_nodes.values()) {
 
-                if (exit) {
+                if (this.exit) {
                     return 1;
                 }
 
                 conta_nodo++;
 
-                int c = conta_nodo;
+                final int c = conta_nodo;
 
                 MiscTools.GUIRun(() -> {
-                    node_bar.setValue(c);
+                    this.node_bar.setValue(c);
                 });
 
-                HashMap<String, Object> current_hashmap_node = (HashMap<String, Object>) o;
+                final HashMap<String, Object> current_hashmap_node = (HashMap<String, Object>) o;
 
                 MegaMutableTreeNode current_node;
 
@@ -507,7 +512,7 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
                 String parent_id = (String) current_hashmap_node.get("parent");
 
-                String current_id = (String) current_hashmap_node.get("h");
+                final String current_id = (String) current_hashmap_node.get("h");
 
                 boolean ignore_node = false;
 
@@ -515,9 +520,9 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
                     if ((subfolder_id == null && folder_nodes.get(parent_id) != null) || (subfolder_id != null && !subfolder_id.equals(current_id) && folder_nodes.get(parent_id) != null)) {
 
-                        HashMap<String, Object> parent_hashmap_node = (HashMap) folder_nodes.get(parent_id);
+                        final HashMap<String, Object> parent_hashmap_node = (HashMap) folder_nodes.get(parent_id);
 
-                        MegaMutableTreeNode parent_node;
+                        final MegaMutableTreeNode parent_node;
 
                         if (parent_hashmap_node.get("jtree_node") == null) {
 
@@ -554,11 +559,11 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
             MiscTools.GUIRun(() -> {
 
-                node_bar.setIndeterminate(true);
+                this.node_bar.setIndeterminate(true);
             });
 
             if (root != null) {
-                MiscTools.sortTree(root);
+//                MiscTools.sortTree(root);
 
                 MiscTools.calculateTreeFolderSizes(root);
             }
@@ -566,19 +571,19 @@ public class FolderLinkDialog extends javax.swing.JDialog {
             if (root == null) {
                 LOG.log(SEVERE, null, "MEGA FOLDER ERROR (EMPTY?)");
 
-                _mega_error = 2;
+                this._mega_error = 2;
 
             } else {
 
                 root.setParent(null);
 
-                final JTree ftree = file_tree;
+                final JTree ftree = this.file_tree;
 
                 final MegaMutableTreeNode roott = root;
 
                 MiscTools.GUIRunAndWait(() -> {
 
-                    node_bar.setIndeterminate(true);
+                    this.node_bar.setIndeterminate(true);
 
                     ftree.setModel(new DefaultTreeModel(roott));
 
@@ -589,20 +594,20 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
             }
 
-        } catch (MegaAPIException mex) {
+        } catch (final MegaAPIException mex) {
 
             LOG.log(SEVERE, null, mex);
 
-            _mega_error = mex.getCode();
+            this._mega_error = mex.getCode();
 
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
 
             LOG.log(SEVERE, null, ex);
 
-            _mega_error = 1;
+            this._mega_error = 1;
         }
 
-        working = false;
+        this.working = false;
 
         return 0;
 
@@ -611,49 +616,49 @@ public class FolderLinkDialog extends javax.swing.JDialog {
     private void _genDownloadLiks() {
 
         MiscTools.GUIRun(() -> {
-            working = true;
+            this.working = true;
 
-            _download_links.clear();
+            this._download_links.clear();
 
-            MegaMutableTreeNode root = (MegaMutableTreeNode) file_tree.getModel().getRoot();
+            final MegaMutableTreeNode root = (MegaMutableTreeNode) this.file_tree.getModel().getRoot();
 
-            Enumeration files_tree = root.depthFirstEnumeration();
+            final Enumeration files_tree = root.depthFirstEnumeration();
 
-            total_space_label.setText("[---]");
+            this.total_space_label.setText("[---]");
 
             THREAD_POOL.execute(() -> {
 
-                String folder_id = findFirstRegex("#F!([^!]+)", _link, 1);
+                String folder_id = findFirstRegex("#F!([^!]+)", this._link, 1);
 
                 if (folder_id.contains("@")) {
 
-                    String[] fids = folder_id.split("@");
+                    final String[] fids = folder_id.split("@");
 
                     folder_id = fids[0];
                 }
 
-                _total_space = 0L;
+                this._total_space = 0L;
 
                 while (files_tree.hasMoreElements()) {
 
-                    MegaMutableTreeNode node = (MegaMutableTreeNode) files_tree.nextElement();
+                    final MegaMutableTreeNode node = (MegaMutableTreeNode) files_tree.nextElement();
 
                     if (node.isLeaf() && node != root && ((HashMap<String, Object>) node.getUserObject()).get("size") != null) {
 
                         String path = "";
 
-                        Object[] object_path = node.getUserObjectPath();
+                        final Object[] object_path = node.getUserObjectPath();
 
-                        for (Object p : object_path) {
+                        for (final Object p : object_path) {
 
                             path += File.separator + ((Map<String, Object>) p).get("name");
                         }
 
                         path = path.replaceAll("^/+", "").replaceAll("^\\+", "").trim();
 
-                        String url = "https://mega.nz/#N!" + ((Map<String, Object>) node.getUserObject()).get("h") + "!" + ((Map<String, Object>) node.getUserObject()).get("key") + "###n=" + folder_id;
+                        final String url = "https://mega.nz/#N!" + ((Map<String, Object>) node.getUserObject()).get("h") + "!" + ((Map<String, Object>) node.getUserObject()).get("key") + "###n=" + folder_id;
 
-                        HashMap<String, Object> download_link = new HashMap<>();
+                        final HashMap<String, Object> download_link = new HashMap<>();
 
                         download_link.put("url", url);
 
@@ -663,22 +668,22 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
                         download_link.put("filesize", ((Map<String, Object>) node.getUserObject()).get("size"));
 
-                        _total_space += (long) download_link.get("filesize");
+                        this._total_space += (long) download_link.get("filesize");
 
-                        _download_links.add(download_link);
+                        this._download_links.add(download_link);
                     } else if (node.isLeaf() && node != root) {
                         String path = "";
 
-                        Object[] object_path = node.getUserObjectPath();
+                        final Object[] object_path = node.getUserObjectPath();
 
-                        for (Object p : object_path) {
+                        for (final Object p : object_path) {
 
                             path += File.separator + ((Map<String, Object>) p).get("name");
                         }
 
                         path = path.replaceAll("^/+", "").replaceAll("^\\+", "").trim();
 
-                        HashMap<String, Object> download_link = new HashMap<>();
+                        final HashMap<String, Object> download_link = new HashMap<>();
 
                         download_link.put("url", "*");
 
@@ -686,22 +691,22 @@ public class FolderLinkDialog extends javax.swing.JDialog {
 
                         download_link.put("type", ((HashMap<String, Object>) node.getUserObject()).get("type"));
 
-                        _download_links.add(download_link);
+                        this._download_links.add(download_link);
                     }
                 }
 
                 MiscTools.GUIRunAndWait(() -> {
 
-                    total_space_label.setText("[" + formatBytes(_total_space) + "]");
+                    this.total_space_label.setText("[" + formatBytes(this._total_space) + "]");
 
-                    for (JComponent c : new JComponent[]{dance_button, warning_label, skip_button, skip_rest_button, total_space_label}) {
+                    for (final JComponent c : new JComponent[]{this.dance_button, this.warning_label, this.skip_button, this.skip_rest_button, this.total_space_label}) {
 
                         c.setEnabled(root.getChildCount() > 0);
                     }
 
-                    node_bar.setVisible(false);
+                    this.node_bar.setVisible(false);
 
-                    working = false;
+                    this.working = false;
                 });
 
             });

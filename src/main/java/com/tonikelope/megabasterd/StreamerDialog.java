@@ -9,11 +9,9 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Dialog;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
-import static java.awt.event.WindowEvent.WINDOW_CLOSING;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashSet;
@@ -21,12 +19,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MiscTools.Bin2UrlBASE64;
+import static com.tonikelope.megabasterd.MiscTools.checkMegaAccountLoginAndShowMasterPassDialog;
+import static com.tonikelope.megabasterd.MiscTools.copyTextToClipboard;
+import static com.tonikelope.megabasterd.MiscTools.findFirstRegex;
+import static java.awt.event.WindowEvent.WINDOW_CLOSING;
 
 /**
- *
  * @author tonikelope
  */
 public class StreamerDialog extends javax.swing.JDialog implements ClipboardChangeObserver {
@@ -37,15 +38,15 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
     private String _selected_item;
 
     public JButton getDance_button() {
-        return dance_button;
+        return this.dance_button;
     }
 
     public JComboBox<String> getUse_mega_account_down_combobox() {
-        return use_mega_account_down_combobox;
+        return this.use_mega_account_down_combobox;
     }
 
     public MainPanel getMain_panel() {
-        return _main_panel;
+        return this._main_panel;
     }
 
     /**
@@ -53,51 +54,51 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
      *
      * @param clipboardspy
      */
-    public StreamerDialog(MainPanelView parent, boolean modal, ClipboardSpy clipboardspy) {
+    public StreamerDialog(final MainPanelView parent, final boolean modal, final ClipboardSpy clipboardspy) {
 
         super(parent, modal);
 
-        _main_panel = parent.getMain_panel();
+        this._main_panel = parent.getMain_panel();
 
-        _clipboardspy = clipboardspy;
+        this._clipboardspy = clipboardspy;
 
-        _selected_item = null;
+        this._selected_item = null;
 
-        _mainPanelView = parent;
+        this._mainPanelView = parent;
 
         MiscTools.GUIRunAndWait(() -> {
 
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, _main_panel.getZoom_factor());
+//            updateFonts(this, GUI_FONT, _main_panel.getZoom_factor());
+//
+//            translateLabels(this);
 
-            translateLabels(this);
-
-            if (_main_panel.isUse_mega_account_down() && _main_panel.getMega_accounts().size() > 0) {
+            if (this._main_panel.isUse_mega_account_down() && this._main_panel.getMega_accounts().size() > 0) {
 
                 THREAD_POOL.execute(() -> {
                     MiscTools.GUIRun(() -> {
-                        String mega_default_down = _main_panel.getMega_account_down();
+                        final String mega_default_down = this._main_panel.getMega_account_down();
 
-                        use_mega_account_down_combobox.addItem(mega_default_down);
+                        this.use_mega_account_down_combobox.addItem(mega_default_down);
 
-                        _main_panel.getMega_accounts().keySet().stream().filter((k) -> (!mega_default_down.equals(k))).forEachOrdered((k) -> {
-                            use_mega_account_down_combobox.addItem(k);
+                        this._main_panel.getMega_accounts().keySet().stream().filter((k) -> (!mega_default_down.equals(k))).forEachOrdered((k) -> {
+                            this.use_mega_account_down_combobox.addItem(k);
                         });
-                        use_mega_account_down_combobox.addItem("");
-                        use_mega_account_down_combobox.setSelectedIndex(0);
+                        this.use_mega_account_down_combobox.addItem("");
+                        this.use_mega_account_down_combobox.setSelectedIndex(0);
                     });
                 });
 
             } else {
 
-                use_mega_account_down_combobox.setEnabled(false);
-                use_mega_account_down_combobox.setVisible(false);
-                use_mega_account_down_label.setEnabled(false);
-                use_mega_account_down_label.setVisible(false);
+                this.use_mega_account_down_combobox.setEnabled(false);
+                this.use_mega_account_down_combobox.setVisible(false);
+                this.use_mega_account_down_label.setEnabled(false);
+                this.use_mega_account_down_label.setVisible(false);
             }
 
-            pack();
+            this.pack();
         });
     }
 
@@ -110,86 +111,88 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        put_label = new javax.swing.JLabel();
-        dance_button = new javax.swing.JButton();
-        original_link_textfield = new javax.swing.JTextField();
-        use_mega_account_down_label = new javax.swing.JLabel();
-        use_mega_account_down_combobox = new javax.swing.JComboBox<>();
+        this.put_label = new javax.swing.JLabel();
+        this.dance_button = new javax.swing.JButton();
+        this.original_link_textfield = new javax.swing.JTextField();
+        this.use_mega_account_down_label = new javax.swing.JLabel();
+        this.use_mega_account_down_combobox = new javax.swing.JComboBox<>();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Streamer");
-        setResizable(false);
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        this.setTitle("Streamer");
+        this.setResizable(false);
 
-        put_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        put_label.setText("Put your MEGA/MegaCrypter/ELC link here in order to get a streaming link:");
-        put_label.setDoubleBuffered(true);
+        this.put_label.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.put_label.setText("Put your MEGA/MegaCrypter/ELC link here in order to get a streaming link:");
+        this.put_label.setDoubleBuffered(true);
 
-        dance_button.setBackground(new java.awt.Color(102, 204, 255));
-        dance_button.setFont(new java.awt.Font("Dialog", 1, 22)); // NOI18N
-        dance_button.setForeground(new java.awt.Color(255, 255, 255));
-        dance_button.setText("Let's dance, baby");
-        dance_button.setDoubleBuffered(true);
-        dance_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                dance_buttonActionPerformed(evt);
+        this.dance_button.setBackground(new java.awt.Color(102, 204, 255));
+        this.dance_button.setFont(new java.awt.Font("Dialog", 1, 22)); // NOI18N
+        this.dance_button.setForeground(new java.awt.Color(255, 255, 255));
+        this.dance_button.setText("Let's dance, baby");
+        this.dance_button.setDoubleBuffered(true);
+        this.dance_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                StreamerDialog.this.dance_buttonActionPerformed(evt);
             }
         });
 
-        original_link_textfield.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        original_link_textfield.setDoubleBuffered(true);
+        this.original_link_textfield.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        this.original_link_textfield.setDoubleBuffered(true);
 
-        use_mega_account_down_label.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
-        use_mega_account_down_label.setText("Use this account for streaming:");
+        this.use_mega_account_down_label.setFont(new java.awt.Font("Dialog", 1, 16)); // NOI18N
+        this.use_mega_account_down_label.setText("Use this account for streaming:");
 
-        use_mega_account_down_combobox.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        use_mega_account_down_combobox.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                use_mega_account_down_comboboxItemStateChanged(evt);
+        this.use_mega_account_down_combobox.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.use_mega_account_down_combobox.addItemListener(new java.awt.event.ItemListener() {
+            @Override
+            public void itemStateChanged(final java.awt.event.ItemEvent evt) {
+                StreamerDialog.this.use_mega_account_down_comboboxItemStateChanged(evt);
             }
         });
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(use_mega_account_down_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(use_mega_account_down_combobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(dance_button))
-                    .addComponent(put_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(original_link_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, 1000, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(this.use_mega_account_down_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.use_mega_account_down_combobox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addGap(18, 18, 18)
+                                                .addComponent(this.dance_button))
+                                        .addComponent(this.put_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(this.original_link_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, 1000, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(put_label)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(original_link_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(dance_button)
-                    .addComponent(use_mega_account_down_combobox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(use_mega_account_down_label))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.put_label)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.original_link_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(this.dance_button)
+                                        .addComponent(this.use_mega_account_down_combobox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(this.use_mega_account_down_label))
+                                .addContainerGap())
         );
 
-        original_link_textfield.addMouseListener(new ContextMenuMouseListener());
+        this.original_link_textfield.addMouseListener(new ContextMenuMouseListener());
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void dance_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dance_buttonActionPerformed
+    private void dance_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dance_buttonActionPerformed
 
-        dance_button.setEnabled(false);
+        this.dance_button.setEnabled(false);
 
-        original_link_textfield.setEnabled(false);
+        this.original_link_textfield.setEnabled(false);
 
         final Dialog tthis = this;
 
@@ -199,7 +202,7 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
 
                 String stream_link = null;
 
-                String link = URLDecoder.decode(original_link_textfield.getText(), "UTF-8").trim();
+                String link = URLDecoder.decode(this.original_link_textfield.getText(), "UTF-8").trim();
 
                 if (link.length() > 0) {
 
@@ -211,7 +214,7 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
 
                         } else if (findFirstRegex("://elc", link, 0) != null) {
 
-                            HashSet links = CryptTools.decryptELC(link, ((MainPanelView) tthis.getParent()).getMain_panel());
+                            final HashSet links = CryptTools.decryptELC(link, ((MainPanelView) tthis.getParent()).getMain_panel());
 
                             if (links != null) {
 
@@ -219,31 +222,31 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
                             }
                         }
 
-                    } catch (Exception ex) {
+                    } catch (final Exception ex) {
 
                         error = true;
 
                         LOG.log(Level.SEVERE, ex.getMessage());
                     }
 
-                    String data;
+                    final String data;
 
                     if (findFirstRegex("://mega(\\.co)?\\.nz/#[^fF]", link, 0) != null || findFirstRegex("://mega(\\.co)?\\.nz/#F*", link, 0) != null || findFirstRegex("https?://[^/]+/![^!]+![0-9a-fA-F]+", link, 0) != null) {
 
                         if (link.contains("#F*")) {
 
-                            MegaAPI ma = new MegaAPI();
+                            final MegaAPI ma = new MegaAPI();
 
-                            Set<String> links = new HashSet<>();
+                            final Set<String> links = new HashSet<>();
 
                             links.add(link);
 
-                            List nlinks = ma.GENERATE_N_LINKS(links);
+                            final List nlinks = ma.GENERATE_N_LINKS(links);
 
                             link = (String) nlinks.get(0);
                         }
 
-                        String selected_account = (String) use_mega_account_down_combobox.getSelectedItem();
+                        final String selected_account = (String) this.use_mega_account_down_combobox.getSelectedItem();
 
                         data = Bin2UrlBASE64(((selected_account != null ? selected_account : "") + "|" + link).getBytes("UTF-8"));
 
@@ -264,44 +267,44 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
                     MiscTools.GUIRun(() -> {
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("Please, paste a Mega/MegaCrypter/ELC link!"), "Error", JOptionPane.ERROR_MESSAGE);
 
-                        original_link_textfield.setText("");
+                        this.original_link_textfield.setText("");
 
-                        dance_button.setEnabled(true);
+                        this.dance_button.setEnabled(true);
 
-                        original_link_textfield.setEnabled(true);
+                        this.original_link_textfield.setEnabled(true);
                     });
 
                 } else {
 
-                    _mainPanelView.getMain_panel().getClipboardspy().detachObserver((ClipboardChangeObserver) tthis);
+                    this._mainPanelView.getMain_panel().getClipboardspy().detachObserver((ClipboardChangeObserver) tthis);
                     copyTextToClipboard(stream_link);
                     MiscTools.GUIRun(() -> {
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("Streaming link was copied to clipboard!\nRemember to keep MegaBasterd running in background while playing content."));
-                        dispose();
-                        getParent().dispatchEvent(new WindowEvent(tthis, WINDOW_CLOSING));
+                        this.dispose();
+                        this.getParent().dispatchEvent(new WindowEvent(tthis, WINDOW_CLOSING));
                     });
                 }
-            } catch (UnsupportedEncodingException ex) {
+            } catch (final UnsupportedEncodingException ex) {
                 LOG.log(Level.SEVERE, ex.getMessage());
             }
         });
 
     }//GEN-LAST:event_dance_buttonActionPerformed
 
-    private void use_mega_account_down_comboboxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_use_mega_account_down_comboboxItemStateChanged
+    private void use_mega_account_down_comboboxItemStateChanged(final java.awt.event.ItemEvent evt) {//GEN-FIRST:event_use_mega_account_down_comboboxItemStateChanged
 
-        if (_selected_item == null || !use_mega_account_down_combobox.getSelectedItem().equals(_selected_item)) {
-            _selected_item = (String) use_mega_account_down_combobox.getSelectedItem();
+        if (this._selected_item == null || !this.use_mega_account_down_combobox.getSelectedItem().equals(this._selected_item)) {
+            this._selected_item = (String) this.use_mega_account_down_combobox.getSelectedItem();
 
-            if (_main_panel.isUse_mega_account_down() && !"".equals(_selected_item)) {
+            if (this._main_panel.isUse_mega_account_down() && !"".equals(this._selected_item)) {
 
-                use_mega_account_down_combobox.setEnabled(false);
+                this.use_mega_account_down_combobox.setEnabled(false);
 
-                dance_button.setEnabled(false);
+                this.dance_button.setEnabled(false);
 
-                dance_button.setText(LabelTranslatorSingleton.getInstance().translate("Checking MEGA account..."));
+                this.dance_button.setText(LabelTranslatorSingleton.getInstance().translate("Checking MEGA account..."));
 
-                pack();
+                this.pack();
 
                 final StreamerDialog tthis = this;
 
@@ -309,27 +312,27 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
                     boolean use_account = true;
                     try {
 
-                        if (checkMegaAccountLoginAndShowMasterPassDialog(_main_panel, tthis, _selected_item) == null) {
+                        if (checkMegaAccountLoginAndShowMasterPassDialog(this._main_panel, this._selected_item) == null) {
                             use_account = false;
                         }
 
-                    } catch (Exception ex) {
+                    } catch (final Exception ex) {
 
                         use_account = false;
                     }
                     if (!use_account) {
                         MiscTools.GUIRun(() -> {
-                            use_mega_account_down_combobox.setSelectedIndex(_main_panel.getMega_accounts().size());
+                            this.use_mega_account_down_combobox.setSelectedIndex(this._main_panel.getMega_accounts().size());
                         });
                     }
                     MiscTools.GUIRun(() -> {
-                        getUse_mega_account_down_combobox().setEnabled(true);
+                        this.getUse_mega_account_down_combobox().setEnabled(true);
 
-                        getDance_button().setText(LabelTranslatorSingleton.getInstance().translate("Let's dance, baby"));
+                        this.getDance_button().setText(LabelTranslatorSingleton.getInstance().translate("Let's dance, baby"));
 
-                        getDance_button().setEnabled(true);
+                        this.getDance_button().setEnabled(true);
 
-                        pack();
+                        this.pack();
                     });
                 });
 
@@ -341,12 +344,12 @@ public class StreamerDialog extends javax.swing.JDialog implements ClipboardChan
     public void notifyClipboardChange() {
 
         MiscTools.GUIRun(() -> {
-            String link = extractFirstMegaLinkFromString(extractStringFromClipboardContents(_clipboardspy.getContents()));
+//            String link = extractFirstMegaLinkFromString(extractStringFromClipboardContents(_clipboardspy.getContents()));
 
-            if (!link.contains("/#F!")) {
-
-                original_link_textfield.setText(link);
-            }
+//            if (!link.contains("/#F!")) {
+//
+//                original_link_textfield.setText(link);
+//            }
         });
     }
 

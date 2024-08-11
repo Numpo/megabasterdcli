@@ -9,16 +9,17 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Color;
-import java.awt.Dialog;
-import java.util.logging.Logger;
 import javax.sound.midi.Sequencer;
-import javax.swing.JOptionPane;
+import javax.swing.*;
+import java.awt.*;
+import java.util.logging.Logger;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MainPanel.VERSION;
+import static com.tonikelope.megabasterd.MiscTools.checkNewVersion;
+import static com.tonikelope.megabasterd.MiscTools.openBrowserURL;
 
 /**
- *
  * @author tonikelope
  */
 public class AboutDialog extends javax.swing.JDialog {
@@ -32,22 +33,22 @@ public class AboutDialog extends javax.swing.JDialog {
     public static final String KIM_URL = "http://www.kim.com/";
     private static volatile Sequencer _midi = null;
 
-    public AboutDialog(MainPanelView parent, boolean modal) {
+    public AboutDialog(final MainPanelView parent, final boolean modal) {
 
         super(parent, modal);
 
         MiscTools.GUIRunAndWait(() -> {
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, parent.getMain_panel().getZoom_factor());
-
-            translateLabels(this);
+//            updateFonts(this, GUI_FONT, parent.getMain_panel().getZoom_factor());
+//
+//            translateLabels(this);
 
             if (MainPanel.getNew_version() != null) {
-                mcdown_url_button.setEnabled(true);
+                this.mcdown_url_button.setEnabled(true);
             }
 
-            pack();
+            this.pack();
         });
     }
 
@@ -60,284 +61,308 @@ public class AboutDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        title_label = new javax.swing.JLabel();
-        made_in_spain_label = new javax.swing.JLabel();
-        subtitle_label = new javax.swing.JLabel();
-        mc_logo_label = new javax.swing.JLabel();
-        mcdown_url_button = new javax.swing.JButton();
-        author_webpage_label = new javax.swing.JLabel();
-        mb_label = new javax.swing.JLabel();
-        check_version_button = new javax.swing.JButton();
-        dot_com_label = new javax.swing.JLabel();
-        java_version = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        this.title_label = new javax.swing.JLabel();
+        this.made_in_spain_label = new javax.swing.JLabel();
+        this.subtitle_label = new javax.swing.JLabel();
+        this.mc_logo_label = new javax.swing.JLabel();
+        this.mcdown_url_button = new javax.swing.JButton();
+        this.author_webpage_label = new javax.swing.JLabel();
+        this.mb_label = new javax.swing.JLabel();
+        this.check_version_button = new javax.swing.JButton();
+        this.dot_com_label = new javax.swing.JLabel();
+        this.java_version = new javax.swing.JLabel();
+        this.jPanel1 = new javax.swing.JPanel();
+        this.jLabel5 = new javax.swing.JLabel();
+        this.jLabel2 = new javax.swing.JLabel();
+        this.jLabel3 = new javax.swing.JLabel();
+        this.jLabel1 = new javax.swing.JLabel();
+        this.jLabel4 = new javax.swing.JLabel();
+        this.jLabel6 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("About");
-        setIconImage(null);
-        setResizable(false);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        this.setTitle("About");
+        this.setIconImage(null);
+        this.setResizable(false);
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(final java.awt.event.WindowEvent evt) {
+                AboutDialog.this.formWindowClosing(evt);
             }
-            public void windowOpened(java.awt.event.WindowEvent evt) {
-                formWindowOpened(evt);
-            }
-        });
 
-        title_label.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
-        title_label.setText("MegaBasterd " + VERSION + " ");
-        title_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        title_label.setDoubleBuffered(true);
-        title_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                title_labelMouseReleased(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                title_labelMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                title_labelMouseEntered(evt);
+            @Override
+            public void windowOpened(final java.awt.event.WindowEvent evt) {
+                AboutDialog.this.formWindowOpened(evt);
             }
         });
 
-        made_in_spain_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/m_in_spain.png"))); // NOI18N
-        made_in_spain_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        made_in_spain_label.setDoubleBuffered(true);
-        made_in_spain_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                made_in_spain_labelMouseReleased(evt);
+        this.title_label.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
+        this.title_label.setText("MegaBasterd " + VERSION + " ");
+        this.title_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.title_label.setDoubleBuffered(true);
+        this.title_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.title_labelMouseReleased(evt);
+            }
+
+            @Override
+            public void mouseExited(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.title_labelMouseExited(evt);
+            }
+
+            @Override
+            public void mouseEntered(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.title_labelMouseEntered(evt);
             }
         });
 
-        subtitle_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
-        subtitle_label.setForeground(new java.awt.Color(102, 102, 102));
-        subtitle_label.setText("Yet another unofficial (and ugly) cross-platform MEGA downloader/uploader/streaming suite.");
-        subtitle_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        subtitle_label.setDoubleBuffered(true);
-        subtitle_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                subtitle_labelMouseReleased(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                subtitle_labelMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                subtitle_labelMouseEntered(evt);
+        this.made_in_spain_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/m_in_spain.png"))); // NOI18N
+        this.made_in_spain_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.made_in_spain_label.setDoubleBuffered(true);
+        this.made_in_spain_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.made_in_spain_labelMouseReleased(evt);
             }
         });
 
-        mc_logo_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/mega_crypter.png"))); // NOI18N
-        mc_logo_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        mc_logo_label.setDoubleBuffered(true);
-        mc_logo_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                mc_logo_labelMouseReleased(evt);
+        this.subtitle_label.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        this.subtitle_label.setForeground(new java.awt.Color(102, 102, 102));
+        this.subtitle_label.setText("Yet another unofficial (and ugly) cross-platform MEGA downloader/uploader/streaming suite.");
+        this.subtitle_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.subtitle_label.setDoubleBuffered(true);
+        this.subtitle_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.subtitle_labelMouseReleased(evt);
+            }
+
+            @Override
+            public void mouseExited(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.subtitle_labelMouseExited(evt);
+            }
+
+            @Override
+            public void mouseEntered(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.subtitle_labelMouseEntered(evt);
             }
         });
 
-        mcdown_url_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        mcdown_url_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-copy-to-clipboard-30.png"))); // NOI18N
-        mcdown_url_button.setText("Download latest version");
-        mcdown_url_button.setDoubleBuffered(true);
-        mcdown_url_button.setEnabled(false);
-        mcdown_url_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mcdown_url_buttonActionPerformed(evt);
+        this.mc_logo_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/mega_crypter.png"))); // NOI18N
+        this.mc_logo_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.mc_logo_label.setDoubleBuffered(true);
+        this.mc_logo_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.mc_logo_labelMouseReleased(evt);
             }
         });
 
-        author_webpage_label.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        author_webpage_label.setForeground(new java.awt.Color(102, 102, 102));
-        author_webpage_label.setText("Made with love (and with no warranty) by tonikelope.");
-        author_webpage_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        author_webpage_label.setDoubleBuffered(true);
-        author_webpage_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                author_webpage_labelMouseEntered(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                author_webpage_labelMouseExited(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                author_webpage_labelMouseReleased(evt);
+        this.mcdown_url_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        this.mcdown_url_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-copy-to-clipboard-30.png"))); // NOI18N
+        this.mcdown_url_button.setText("Download latest version");
+        this.mcdown_url_button.setDoubleBuffered(true);
+        this.mcdown_url_button.setEnabled(false);
+        this.mcdown_url_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                AboutDialog.this.mcdown_url_buttonActionPerformed(evt);
             }
         });
 
-        mb_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/mbasterd_logo_nuevo.png"))); // NOI18N
-        mb_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        mb_label.setDoubleBuffered(true);
-        mb_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                mb_labelMouseReleased(evt);
+        this.author_webpage_label.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        this.author_webpage_label.setForeground(new java.awt.Color(102, 102, 102));
+        this.author_webpage_label.setText("Made with love (and with no warranty) by tonikelope.");
+        this.author_webpage_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.author_webpage_label.setDoubleBuffered(true);
+        this.author_webpage_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.author_webpage_labelMouseEntered(evt);
+            }
+
+            @Override
+            public void mouseExited(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.author_webpage_labelMouseExited(evt);
+            }
+
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.author_webpage_labelMouseReleased(evt);
             }
         });
 
-        check_version_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        check_version_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-restart-30.png"))); // NOI18N
-        check_version_button.setText("Check version");
-        check_version_button.setDoubleBuffered(true);
-        check_version_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                check_version_buttonActionPerformed(evt);
+        this.mb_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/mbasterd_logo_nuevo.png"))); // NOI18N
+        this.mb_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.mb_label.setDoubleBuffered(true);
+        this.mb_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.mb_labelMouseReleased(evt);
             }
         });
 
-        dot_com_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/dot_com2.png"))); // NOI18N
-        dot_com_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        dot_com_label.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                dot_com_labelMouseReleased(evt);
+        this.check_version_button.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        this.check_version_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-restart-30.png"))); // NOI18N
+        this.check_version_button.setText("Check version");
+        this.check_version_button.setDoubleBuffered(true);
+        this.check_version_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                AboutDialog.this.check_version_buttonActionPerformed(evt);
             }
         });
 
-        java_version.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        java_version.setForeground(new java.awt.Color(102, 102, 102));
-        java_version.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        java_version.setText(System.getProperty("java.vm.name")+" "+System.getProperty("java.version"));
+        this.dot_com_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/dot_com2.png"))); // NOI18N
+        this.dot_com_label.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        this.dot_com_label.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseReleased(final java.awt.event.MouseEvent evt) {
+                AboutDialog.this.dot_com_labelMouseReleased(evt);
+            }
+        });
 
-        jLabel5.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/turkey.png"))); // NOI18N
-        jLabel5.setText("FabrieI");
+        this.java_version.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        this.java_version.setForeground(new java.awt.Color(102, 102, 102));
+        this.java_version.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        this.java_version.setText(System.getProperty("java.vm.name") + " " + System.getProperty("java.version"));
 
-        jLabel2.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/germany.png"))); // NOI18N
-        jLabel2.setText("NieckLikesCode");
+        this.jLabel5.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel5.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/turkey.png"))); // NOI18N
+        this.jLabel5.setText("FabrieI");
 
-        jLabel3.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/hungary.png"))); // NOI18N
-        jLabel3.setText("Roschach96 ");
+        this.jLabel2.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel2.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/germany.png"))); // NOI18N
+        this.jLabel2.setText("NieckLikesCode");
 
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/china.png"))); // NOI18N
-        jLabel1.setText("linkea131");
-        jLabel1.setDoubleBuffered(true);
+        this.jLabel3.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel3.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/hungary.png"))); // NOI18N
+        this.jLabel3.setText("Roschach96 ");
 
-        jLabel4.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/italy.png"))); // NOI18N
-        jLabel4.setText("bovirus ");
+        this.jLabel1.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel1.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/china.png"))); // NOI18N
+        this.jLabel1.setText("linkea131");
+        this.jLabel1.setDoubleBuffered(true);
 
-        jLabel6.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/flags/vietnam.png"))); // NOI18N
-        jLabel6.setText("rattybox");
+        this.jLabel4.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel4.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/italy.png"))); // NOI18N
+        this.jLabel4.setText("bovirus ");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
+        this.jLabel6.setFont(new java.awt.Font("Dialog", 0, 16)); // NOI18N
+        this.jLabel6.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/flags/vietnam.png"))); // NOI18N
+        this.jLabel6.setText("rattybox");
+
+        final javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(this.jPanel1);
+        this.jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel1)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel2)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel3)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel4)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel5)
-                .addGap(18, 18, Short.MAX_VALUE)
-                .addComponent(jLabel6)
-                .addContainerGap())
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(this.jLabel1)
+                                .addGap(18, 18, Short.MAX_VALUE)
+                                .addComponent(this.jLabel2)
+                                .addGap(18, 18, Short.MAX_VALUE)
+                                .addComponent(this.jLabel3)
+                                .addGap(18, 18, Short.MAX_VALUE)
+                                .addComponent(this.jLabel4)
+                                .addGap(18, 18, Short.MAX_VALUE)
+                                .addComponent(this.jLabel5)
+                                .addGap(18, 18, Short.MAX_VALUE)
+                                .addComponent(this.jLabel6)
+                                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel5)
-                    .addComponent(jLabel6))
-                .addContainerGap())
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(this.jLabel1)
+                                        .addComponent(this.jLabel2)
+                                        .addComponent(this.jLabel3)
+                                        .addComponent(this.jLabel4)
+                                        .addComponent(this.jLabel5)
+                                        .addComponent(this.jLabel6))
+                                .addContainerGap())
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(subtitle_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(title_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(mcdown_url_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(check_version_button))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(made_in_spain_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(dot_com_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(mb_label)
-                                .addGap(18, 18, 18)
-                                .addComponent(mc_logo_label))
-                            .addComponent(author_webpage_label, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(java_version, javax.swing.GroupLayout.PREFERRED_SIZE, 481, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(this.jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(this.subtitle_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.title_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.mcdown_url_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.check_version_button))
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                .addComponent(this.made_in_spain_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.dot_com_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                                .addComponent(this.mb_label)
+                                                                .addGap(18, 18, 18)
+                                                                .addComponent(this.mc_logo_label))
+                                                        .addComponent(this.author_webpage_label, javax.swing.GroupLayout.Alignment.TRAILING)))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addGap(0, 0, Short.MAX_VALUE)
+                                                .addComponent(this.java_version, javax.swing.GroupLayout.PREFERRED_SIZE, 481, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(title_label)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(9, 9, 9)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(mcdown_url_button)
-                            .addComponent(check_version_button))))
-                .addGap(18, 18, 18)
-                .addComponent(subtitle_label)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(made_in_spain_label)
-                    .addComponent(dot_com_label)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(mb_label)
-                            .addComponent(mc_logo_label))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(author_webpage_label)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(java_version)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(this.title_label)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addGap(9, 9, 9)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                        .addComponent(this.mcdown_url_button)
+                                                        .addComponent(this.check_version_button))))
+                                .addGap(18, 18, 18)
+                                .addComponent(this.subtitle_label)
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(this.made_in_spain_label)
+                                        .addComponent(this.dot_com_label)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                        .addComponent(this.mb_label)
+                                                        .addComponent(this.mc_logo_label))
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(this.author_webpage_label)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(this.java_version)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(this.jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void mcdown_url_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mcdown_url_buttonActionPerformed
+    private void mcdown_url_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mcdown_url_buttonActionPerformed
 
         openBrowserURL(MEGABASTERD_URL);
     }//GEN-LAST:event_mcdown_url_buttonActionPerformed
 
-    private void check_version_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_check_version_buttonActionPerformed
+    private void check_version_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_check_version_buttonActionPerformed
 
-        String old_check_version_button_text = check_version_button.getText();
+        final String old_check_version_button_text = this.check_version_button.getText();
 
-        check_version_button.setEnabled(false);
+        this.check_version_button.setEnabled(false);
 
-        check_version_button.setText(LabelTranslatorSingleton.getInstance().translate("Checking, please wait..."));
+        this.check_version_button.setText(LabelTranslatorSingleton.getInstance().translate("Checking, please wait..."));
 
-        pack();
+        this.pack();
 
         final Dialog tthis = this;
 
@@ -349,85 +374,85 @@ public class AboutDialog extends javax.swing.JDialog {
 
                     JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("MegaBasterd NEW VERSION is available! -> ") + new_version);
 
-                    mcdown_url_button.setEnabled(true);
+                    this.mcdown_url_button.setEnabled(true);
 
                 } else {
 
                     JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("You have the latest version ;)"));
 
-                    mcdown_url_button.setEnabled(false);
+                    this.mcdown_url_button.setEnabled(false);
                 }
 
-                check_version_button.setText(old_check_version_button_text);
+                this.check_version_button.setText(old_check_version_button_text);
 
-                check_version_button.setEnabled(true);
+                this.check_version_button.setEnabled(true);
 
-                pack();
+                this.pack();
             });
         });
     }//GEN-LAST:event_check_version_buttonActionPerformed
 
-    private void mb_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mb_labelMouseReleased
+    private void mb_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mb_labelMouseReleased
 
         openBrowserURL(MEGABASTERD_GITHUB_URL);
     }//GEN-LAST:event_mb_labelMouseReleased
 
-    private void author_webpage_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseReleased
+    private void author_webpage_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseReleased
 
         openBrowserURL(TONIKELOPE_URL);
     }//GEN-LAST:event_author_webpage_labelMouseReleased
 
-    private void mc_logo_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mc_logo_labelMouseReleased
+    private void mc_logo_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mc_logo_labelMouseReleased
 
         openBrowserURL(MEGACRYPTER_URL);
     }//GEN-LAST:event_mc_logo_labelMouseReleased
 
-    private void made_in_spain_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_made_in_spain_labelMouseReleased
+    private void made_in_spain_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_made_in_spain_labelMouseReleased
 
         openBrowserURL(SPAIN_URL);
     }//GEN-LAST:event_made_in_spain_labelMouseReleased
 
-    private void title_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseReleased
+    private void title_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseReleased
         openBrowserURL(MEGABASTERD_GITHUB_URL);
     }//GEN-LAST:event_title_labelMouseReleased
 
-    private void author_webpage_labelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseEntered
-        author_webpage_label.setForeground(Color.blue);
+    private void author_webpage_labelMouseEntered(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseEntered
+        this.author_webpage_label.setForeground(Color.blue);
     }//GEN-LAST:event_author_webpage_labelMouseEntered
 
-    private void author_webpage_labelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseExited
-        author_webpage_label.setForeground(new Color(102, 102, 102));
+    private void author_webpage_labelMouseExited(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_author_webpage_labelMouseExited
+        this.author_webpage_label.setForeground(new Color(102, 102, 102));
     }//GEN-LAST:event_author_webpage_labelMouseExited
 
-    private void title_labelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseEntered
-        title_label.setForeground(Color.blue);
+    private void title_labelMouseEntered(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseEntered
+        this.title_label.setForeground(Color.blue);
     }//GEN-LAST:event_title_labelMouseEntered
 
-    private void title_labelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseExited
-        title_label.setForeground(new Color(51, 51, 51));
+    private void title_labelMouseExited(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_title_labelMouseExited
+        this.title_label.setForeground(new Color(51, 51, 51));
     }//GEN-LAST:event_title_labelMouseExited
 
-    private void subtitle_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseReleased
+    private void subtitle_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseReleased
         // TODO add your handling code here:
         openBrowserURL(MEGA_URL);
     }//GEN-LAST:event_subtitle_labelMouseReleased
 
-    private void dot_com_labelMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dot_com_labelMouseReleased
+    private void dot_com_labelMouseReleased(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_dot_com_labelMouseReleased
         // TODO add your handling code here:
         openBrowserURL(KIM_URL);
     }//GEN-LAST:event_dot_com_labelMouseReleased
 
-    private void subtitle_labelMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseEntered
+    private void subtitle_labelMouseEntered(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseEntered
         // TODO add your handling code here:
-        subtitle_label.setForeground(Color.blue);
+        this.subtitle_label.setForeground(Color.blue);
     }//GEN-LAST:event_subtitle_labelMouseEntered
 
-    private void subtitle_labelMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseExited
+    private void subtitle_labelMouseExited(final java.awt.event.MouseEvent evt) {//GEN-FIRST:event_subtitle_labelMouseExited
         // TODO add your handling code here:
-        subtitle_label.setForeground(new Color(102, 102, 102));
+        this.subtitle_label.setForeground(new Color(102, 102, 102));
     }//GEN-LAST:event_subtitle_labelMouseExited
 
-    private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
+    private void formWindowOpened(final java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
         THREAD_POOL.execute(() -> {
 
@@ -439,12 +464,12 @@ public class AboutDialog extends javax.swing.JDialog {
         });
     }//GEN-LAST:event_formWindowOpened
 
-    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+    private void formWindowClosing(final java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         // TODO add your handling code here:
         THREAD_POOL.execute(() -> {
             _midi.stop();
         });
-        dispose();
+        this.dispose();
     }//GEN-LAST:event_formWindowClosing
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

@@ -11,11 +11,11 @@ package com.tonikelope.megabasterd;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
 
+import static java.util.logging.Level.SEVERE;
+
 /**
- *
  * @author tonikelope
  */
 public class UploadManager extends TransferenceManager {
@@ -24,59 +24,66 @@ public class UploadManager extends TransferenceManager {
 
     private final Object _log_file_lock;
 
-    public UploadManager(MainPanel main_panel) {
+    public UploadManager(final MainPanel main_panel) {
 
         super(main_panel, main_panel.getMax_ul(), main_panel.getView().getStatus_up_label(), main_panel.getView().getjPanel_scroll_up(), main_panel.getView().getClose_all_finished_up_button(), main_panel.getView().getPause_all_up_button(), main_panel.getView().getClean_all_up_menu());
 
-        _log_file_lock = new Object();
+        this._log_file_lock = new Object();
+    }
+
+    public UploadManager(final MainPanel main_panel, final String toto) {
+
+        super(main_panel, main_panel.getMax_ul(), null, null, null, null, null);
+
+        this._log_file_lock = new Object();
     }
 
     public Object getLog_file_lock() {
-        return _log_file_lock;
+        return this._log_file_lock;
     }
 
     @Override
     public void provision(final Transference upload) {
-        MiscTools.GUIRun(() -> {
-            getScroll_panel().add(((Upload) upload).getView());
-        });
+//        MiscTools.GUIRun(() -> {
+//            this.getScroll_panel().add(((Upload) upload).getView());
+//        });
 
         ((Upload) upload).provisionIt();
 
         if (((Upload) upload).isProvision_ok()) {
 
-            increment_total_size(upload.getFile_size());
+            this.increment_total_size(upload.getFile_size());
 
-            getTransference_waitstart_aux_queue().add(upload);
+            this.getTransference_waitstart_aux_queue().add(upload);
 
         } else {
 
-            getTransference_finished_queue().add(upload);
+            this.getTransference_finished_queue().add(upload);
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
     @Override
-    public void remove(Transference[] uploads) {
+    public void remove(final Transference[] uploads) {
 
-        ArrayList<String[]> delete_up = new ArrayList<>();
+        final ArrayList<String[]> delete_up = new ArrayList<>();
 
         for (final Transference u : uploads) {
 
-            MiscTools.GUIRun(() -> {
-                getScroll_panel().remove(((Upload) u).getView());
-            });
+//            MiscTools.GUIRun(() -> {
+//                this.getScroll_panel().remove(((Upload) u).getView());
+//            });
 
-            getTransference_waitstart_queue().remove(u);
+            this.getTransference_waitstart_queue().remove(u);
 
-            getTransference_running_list().remove(u);
+            this.getTransference_running_list().remove(u);
 
-            getTransference_finished_queue().remove(u);
+            this.getTransference_finished_queue().remove(u);
 
-            increment_total_size(-1 * u.getFile_size());
+            this.increment_total_size(-1 * u.getFile_size());
 
-            increment_total_progress(-1 * u.getProgress());
+            this.increment_total_progress(-1 * u.getProgress());
 
             if (!u.isCanceled() || u.isClosed()) {
                 delete_up.add(new String[]{u.getFile_name(), ((Upload) u).getMa().getFull_email()});
@@ -85,29 +92,29 @@ public class UploadManager extends TransferenceManager {
 
         try {
             DBTools.deleteUploads(delete_up.toArray(new String[delete_up.size()][]));
-        } catch (SQLException ex) {
+        } catch (final SQLException ex) {
             LOG.log(SEVERE, null, ex);
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
     public int copyAllLinksToClipboard() {
 
         int total = 0;
 
-        ArrayList<String> links = new ArrayList<>();
+        final ArrayList<String> links = new ArrayList<>();
 
         String out = "";
 
-        for (Transference t : _transference_waitstart_aux_queue) {
-            Upload up = (Upload) t;
+        for (final Transference t : this._transference_waitstart_aux_queue) {
+            final Upload up = (Upload) t;
             links.add(up.getFile_name() + " [" + up.getMa().getEmail() + "] " + (up.getFolder_link() != null ? up.getFolder_link() : ""));
         }
 
-        for (Transference t : _transference_waitstart_queue) {
+        for (final Transference t : this._transference_waitstart_queue) {
 
-            Upload up = (Upload) t;
+            final Upload up = (Upload) t;
             links.add(up.getFile_name() + " [" + up.getMa().getEmail() + "] " + (up.getFolder_link() != null ? up.getFolder_link() : ""));
         }
 
@@ -117,9 +124,9 @@ public class UploadManager extends TransferenceManager {
 
         links.clear();
 
-        for (Transference t : _transference_running_list) {
+        for (final Transference t : this._transference_running_list) {
 
-            Upload up = (Upload) t;
+            final Upload up = (Upload) t;
             links.add(up.getFile_name() + " [" + up.getMa().getEmail() + "] " + (up.getFolder_link() != null ? up.getFolder_link() : "") + (up.getFile_link() != null ? " " + up.getFile_link() : ""));
         }
 
@@ -129,9 +136,9 @@ public class UploadManager extends TransferenceManager {
 
         links.clear();
 
-        for (Transference t : _transference_finished_queue) {
+        for (final Transference t : this._transference_finished_queue) {
 
-            Upload up = (Upload) t;
+            final Upload up = (Upload) t;
             links.add("(UPLOAD FINISHED) " + up.getFile_name() + " [" + up.getMa().getEmail() + "] " + (up.getFolder_link() != null ? up.getFolder_link() : "") + (up.getFile_link() != null ? " " + up.getFile_link() : ""));
         }
 

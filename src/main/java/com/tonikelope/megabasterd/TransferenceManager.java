@@ -9,18 +9,16 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import java.awt.Component;
-import java.awt.TrayIcon;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static java.util.logging.Level.SEVERE;
 
 /**
  * Yes, this class is a f*cking mess (inside "natural" MegaBasterd mess) and
@@ -43,11 +41,11 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
     protected final ConcurrentLinkedQueue<Transference> _transference_finished_queue;
     protected final ConcurrentLinkedQueue<Transference> _transference_running_list;
 
-    private final javax.swing.JPanel _scroll_panel;
-    private final javax.swing.JLabel _status;
-    private final javax.swing.JButton _close_all_button;
-    private final javax.swing.JButton _pause_all_button;
-    private final javax.swing.MenuElement _clean_all_menu;
+    //    private javax.swing.JPanel _scroll_panel;
+//    private javax.swing.JLabel _status;
+//    private javax.swing.JButton _close_all_button;
+//    private javax.swing.JButton _pause_all_button;
+//    private javax.swing.MenuElement _clean_all_menu;
     private int _max_running_trans;
     private final MainPanel _main_panel;
     private final Object _secure_notify_lock;
@@ -69,73 +67,101 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
     protected volatile boolean _all_finished = false;
 
     public boolean isAll_finished() {
-        return _all_finished;
+        return this._all_finished;
     }
 
-    public void setAll_finished(boolean all_finished) {
+    public void setAll_finished(final boolean all_finished) {
         this._all_finished = all_finished;
     }
 
-    public TransferenceManager(MainPanel main_panel, int max_running_trans, javax.swing.JLabel status, javax.swing.JPanel scroll_panel, javax.swing.JButton close_all_button, javax.swing.JButton pause_all_button, javax.swing.MenuElement clean_all_menu) {
-        _notified = false;
-        _paused_all = false;
-        _removing_transferences = false;
-        _provisioning_transferences = false;
-        _starting_transferences = false;
-        _preprocessing_transferences = false;
-        _tray_icon_finish = false;
-        _main_panel = main_panel;
-        _max_running_trans = max_running_trans;
-        _scroll_panel = scroll_panel;
-        _status = status;
-        _pause_all_lock = new Object();
-        _close_all_button = close_all_button;
-        _pause_all_button = pause_all_button;
-        _clean_all_menu = clean_all_menu;
-        _total_size = 0L;
-        _total_progress = 0L;
-        _secure_notify_lock = new Object();
-        _total_size_lock = new Object();
-        _total_progress_lock = new Object();
-        _transference_queue_sort_lock = new Object();
-        _wait_queue_lock = new Object();
-        _sort_wait_start_queue = true;
-        _transference_preprocess_global_queue = new ConcurrentLinkedQueue<>();
-        _transference_waitstart_queue = new ConcurrentLinkedQueue<>();
-        _transference_waitstart_aux_queue = new ConcurrentLinkedQueue<>();
-        _transference_provision_queue = new ConcurrentLinkedQueue<>();
-        _transference_remove_queue = new ConcurrentLinkedQueue<>();
-        _transference_finished_queue = new ConcurrentLinkedQueue<>();
-        _transference_running_list = new ConcurrentLinkedQueue<>();
-        _transference_preprocess_queue = new ConcurrentLinkedQueue<>();
+    public TransferenceManager(final MainPanel main_panel) {
+        this._notified = false;
+        this._paused_all = false;
+        this._removing_transferences = false;
+        this._provisioning_transferences = false;
+        this._starting_transferences = false;
+        this._preprocessing_transferences = false;
+        this._tray_icon_finish = false;
+        this._main_panel = main_panel;
+        this._pause_all_lock = new Object();
+        this._total_size = 0L;
+        this._total_progress = 0L;
+        this._secure_notify_lock = new Object();
+        this._total_size_lock = new Object();
+        this._total_progress_lock = new Object();
+        this._transference_queue_sort_lock = new Object();
+        this._wait_queue_lock = new Object();
+        this._sort_wait_start_queue = true;
+        this._transference_preprocess_global_queue = new ConcurrentLinkedQueue<>();
+        this._transference_waitstart_queue = new ConcurrentLinkedQueue<>();
+        this._transference_waitstart_aux_queue = new ConcurrentLinkedQueue<>();
+        this._transference_provision_queue = new ConcurrentLinkedQueue<>();
+        this._transference_remove_queue = new ConcurrentLinkedQueue<>();
+        this._transference_finished_queue = new ConcurrentLinkedQueue<>();
+        this._transference_running_list = new ConcurrentLinkedQueue<>();
+        this._transference_preprocess_queue = new ConcurrentLinkedQueue<>();
+    }
+
+    public TransferenceManager(final MainPanel main_panel, final int max_running_trans, final javax.swing.JLabel status, final javax.swing.JPanel scroll_panel, final javax.swing.JButton close_all_button, final javax.swing.JButton pause_all_button, final javax.swing.MenuElement clean_all_menu) {
+        this._notified = false;
+        this._paused_all = false;
+        this._removing_transferences = false;
+        this._provisioning_transferences = false;
+        this._starting_transferences = false;
+        this._preprocessing_transferences = false;
+        this._tray_icon_finish = false;
+        this._main_panel = main_panel;
+        this._max_running_trans = max_running_trans;
+//        this._scroll_panel = scroll_panel;
+//        this._status = status;
+        this._pause_all_lock = new Object();
+//        this._close_all_button = close_all_button;
+//        this._pause_all_button = pause_all_button;
+//        this._clean_all_menu = clean_all_menu;
+        this._total_size = 0L;
+        this._total_progress = 0L;
+        this._secure_notify_lock = new Object();
+        this._total_size_lock = new Object();
+        this._total_progress_lock = new Object();
+        this._transference_queue_sort_lock = new Object();
+        this._wait_queue_lock = new Object();
+        this._sort_wait_start_queue = true;
+        this._transference_preprocess_global_queue = new ConcurrentLinkedQueue<>();
+        this._transference_waitstart_queue = new ConcurrentLinkedQueue<>();
+        this._transference_waitstart_aux_queue = new ConcurrentLinkedQueue<>();
+        this._transference_provision_queue = new ConcurrentLinkedQueue<>();
+        this._transference_remove_queue = new ConcurrentLinkedQueue<>();
+        this._transference_finished_queue = new ConcurrentLinkedQueue<>();
+        this._transference_running_list = new ConcurrentLinkedQueue<>();
+        this._transference_preprocess_queue = new ConcurrentLinkedQueue<>();
     }
 
     public Boolean getSort_wait_start_queue() {
-        return _sort_wait_start_queue;
+        return this._sort_wait_start_queue;
     }
 
-    public void setSort_wait_start_queue(Boolean sort_wait_start_queue) {
+    public void setSort_wait_start_queue(final Boolean sort_wait_start_queue) {
         this._sort_wait_start_queue = sort_wait_start_queue;
     }
 
-    public void setPaused_all(boolean _paused_all) {
+    public void setPaused_all(final boolean _paused_all) {
         this._paused_all = _paused_all;
     }
 
     public boolean no_transferences() {
-        return getTransference_preprocess_queue().isEmpty() && getTransference_provision_queue().isEmpty() && getTransference_waitstart_queue().isEmpty() && getTransference_running_list().isEmpty();
+        return this.getTransference_preprocess_queue().isEmpty() && this.getTransference_provision_queue().isEmpty() && this.getTransference_waitstart_queue().isEmpty() && this.getTransference_running_list().isEmpty();
     }
 
     public boolean isPaused_all() {
-        return _paused_all;
+        return this._paused_all;
     }
 
     public Object getWait_queue_lock() {
-        return _wait_queue_lock;
+        return this._wait_queue_lock;
     }
 
     public ConcurrentLinkedQueue<Object> getTransference_preprocess_global_queue() {
-        return _transference_preprocess_global_queue;
+        return this._transference_preprocess_global_queue;
     }
 
     abstract public void provision(Transference transference);
@@ -144,197 +170,197 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
     public boolean isRemoving_transferences() {
 
-        return _removing_transferences;
+        return this._removing_transferences;
     }
 
-    public void setRemoving_transferences(boolean removing) {
-        _removing_transferences = removing;
+    public void setRemoving_transferences(final boolean removing) {
+        this._removing_transferences = removing;
     }
 
     public long get_total_size() {
 
-        synchronized (_total_size_lock) {
-            return _total_size;
+        synchronized (this._total_size_lock) {
+            return this._total_size;
         }
     }
 
-    public void increment_total_size(long val) {
+    public void increment_total_size(final long val) {
 
-        synchronized (_total_size_lock) {
+        synchronized (this._total_size_lock) {
 
-            _total_size += val;
+            this._total_size += val;
         }
     }
 
     public long get_total_progress() {
 
-        synchronized (_total_progress_lock) {
-            return _total_progress;
+        synchronized (this._total_progress_lock) {
+            return this._total_progress;
         }
     }
 
-    public void increment_total_progress(long val) {
+    public void increment_total_progress(final long val) {
 
-        synchronized (_total_progress_lock) {
+        synchronized (this._total_progress_lock) {
 
-            _total_progress += val;
+            this._total_progress += val;
         }
     }
 
     public boolean isProvisioning_transferences() {
-        return _provisioning_transferences;
+        return this._provisioning_transferences;
     }
 
-    public void setProvisioning_transferences(boolean provisioning) {
-        _provisioning_transferences = provisioning;
+    public void setProvisioning_transferences(final boolean provisioning) {
+        this._provisioning_transferences = provisioning;
     }
 
     public boolean isStarting_transferences() {
-        return _starting_transferences;
+        return this._starting_transferences;
     }
 
-    public void setStarting_transferences(boolean starting) {
-        _starting_transferences = starting;
+    public void setStarting_transferences(final boolean starting) {
+        this._starting_transferences = starting;
     }
 
-    public void setPreprocessing_transferences(boolean preprocessing) {
-        _preprocessing_transferences = preprocessing;
+    public void setPreprocessing_transferences(final boolean preprocessing) {
+        this._preprocessing_transferences = preprocessing;
     }
 
     public ConcurrentLinkedQueue<Runnable> getTransference_preprocess_queue() {
-        return _transference_preprocess_queue;
+        return this._transference_preprocess_queue;
     }
 
-    public void setMax_running_trans(int max_running_trans) {
-        _max_running_trans = max_running_trans;
+    public void setMax_running_trans(final int max_running_trans) {
+        this._max_running_trans = max_running_trans;
     }
 
     @Override
     public void secureNotify() {
-        synchronized (_secure_notify_lock) {
+        synchronized (this._secure_notify_lock) {
 
-            _notified = true;
+            this._notified = true;
 
-            _secure_notify_lock.notify();
+            this._secure_notify_lock.notify();
         }
     }
 
     @Override
     public void secureWait() {
 
-        synchronized (_secure_notify_lock) {
-            while (!_notified) {
+        synchronized (this._secure_notify_lock) {
+            while (!this._notified) {
 
                 try {
-                    _secure_notify_lock.wait(1000);
-                } catch (InterruptedException ex) {
+                    this._secure_notify_lock.wait(1000);
+                } catch (final InterruptedException ex) {
                     LOG.log(Level.SEVERE, ex.getMessage());
                 }
             }
 
-            _notified = false;
+            this._notified = false;
         }
     }
 
     public MainPanel getMain_panel() {
-        return _main_panel;
+        return this._main_panel;
     }
 
     public boolean isPreprocessing_transferences() {
 
-        return _preprocessing_transferences;
+        return this._preprocessing_transferences;
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_provision_queue() {
 
-        return _transference_provision_queue;
+        return this._transference_provision_queue;
 
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_waitstart_queue() {
 
-        return _transference_waitstart_queue;
+        return this._transference_waitstart_queue;
 
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_remove_queue() {
 
-        return _transference_remove_queue;
+        return this._transference_remove_queue;
 
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_finished_queue() {
 
-        return _transference_finished_queue;
+        return this._transference_finished_queue;
 
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_running_list() {
 
-        return _transference_running_list;
+        return this._transference_running_list;
 
     }
 
-    public JPanel getScroll_panel() {
-        return _scroll_panel;
-    }
+//    public JPanel getScroll_panel() {
+//        return this._scroll_panel;
+//    }
 
     public void closeAllFinished() {
 
-        _transference_finished_queue.stream().filter((t) -> !t.isCanceled()).map((t) -> {
-            _transference_finished_queue.remove(t);
+        this._transference_finished_queue.stream().filter((t) -> !t.isCanceled()).map((t) -> {
+            this._transference_finished_queue.remove(t);
             return t;
         }).forEachOrdered((t) -> {
-            _transference_remove_queue.add(t);
+            this._transference_remove_queue.add(t);
         });
 
-        secureNotify();
+        this.secureNotify();
     }
 
     public int calcTotalSlotsCount() {
 
         int slots = 0;
 
-        slots = _transference_running_list.stream().map((trans) -> trans.getSlotsCount()).reduce(slots, Integer::sum);
+        slots = this._transference_running_list.stream().map((trans) -> trans.getSlotsCount()).reduce(slots, Integer::sum);
 
         return slots;
 
     }
 
     public void closeAllPreProWaiting() {
-        _transference_preprocess_queue.clear();
+        this._transference_preprocess_queue.clear();
 
-        _transference_preprocess_global_queue.clear();
+        this._transference_preprocess_global_queue.clear();
 
-        _transference_provision_queue.clear();
+        this._transference_provision_queue.clear();
 
-        _transference_remove_queue.addAll(new ArrayList(getTransference_waitstart_queue()));
+        this._transference_remove_queue.addAll(new ArrayList(this.getTransference_waitstart_queue()));
 
-        getTransference_waitstart_queue().clear();
+        this.getTransference_waitstart_queue().clear();
 
-        synchronized (getWait_queue_lock()) {
-            getWait_queue_lock().notifyAll();
+        synchronized (this.getWait_queue_lock()) {
+            this.getWait_queue_lock().notifyAll();
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
     public void cancelAllTransferences() {
-        _transference_preprocess_queue.clear();
+        this._transference_preprocess_queue.clear();
 
-        _transference_preprocess_global_queue.clear();
+        this._transference_preprocess_global_queue.clear();
 
-        _transference_provision_queue.clear();
+        this._transference_provision_queue.clear();
 
-        _transference_remove_queue.addAll(new ArrayList(getTransference_waitstart_aux_queue()));
+        this._transference_remove_queue.addAll(new ArrayList(this.getTransference_waitstart_aux_queue()));
 
-        _transference_remove_queue.addAll(new ArrayList(getTransference_waitstart_queue()));
+        this._transference_remove_queue.addAll(new ArrayList(this.getTransference_waitstart_queue()));
 
-        getTransference_waitstart_queue().clear();
+        this.getTransference_waitstart_queue().clear();
 
-        getTransference_waitstart_aux_queue().clear();
+        this.getTransference_waitstart_aux_queue().clear();
 
-        for (Transference t : getTransference_running_list()) {
+        for (final Transference t : this.getTransference_running_list()) {
 
             if (t instanceof Download) {
                 ((Download) t).setGlobal_cancel(true);
@@ -343,56 +369,56 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
             t.stop();
         }
 
-        synchronized (getWait_queue_lock()) {
-            getWait_queue_lock().notifyAll();
+        synchronized (this.getWait_queue_lock()) {
+            this.getWait_queue_lock().notifyAll();
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
-    public void topWaitQueue(Transference t) {
+    public void topWaitQueue(final Transference t) {
 
-        synchronized (getWait_queue_lock()) {
+        synchronized (this.getWait_queue_lock()) {
 
-            ArrayList<Transference> wait_array = new ArrayList();
+            final ArrayList<Transference> wait_array = new ArrayList();
 
             wait_array.add(t);
 
-            for (Transference t1 : getTransference_waitstart_queue()) {
+            for (final Transference t1 : this.getTransference_waitstart_queue()) {
 
                 if (t1 != t) {
                     wait_array.add(t1);
                 }
             }
 
-            getTransference_waitstart_queue().clear();
+            this.getTransference_waitstart_queue().clear();
 
-            getTransference_waitstart_queue().addAll(wait_array);
+            this.getTransference_waitstart_queue().addAll(wait_array);
 
-            getTransference_waitstart_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
-            getTransference_finished_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
+//            this.getTransference_waitstart_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
+//            this.getTransference_finished_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
-    public void bottomWaitQueue(Transference t) {
+    public void bottomWaitQueue(final Transference t) {
 
-        synchronized (getWait_queue_lock()) {
+        synchronized (this.getWait_queue_lock()) {
 
-            ArrayList<Transference> wait_array = new ArrayList();
+            final ArrayList<Transference> wait_array = new ArrayList();
 
-            for (Transference t1 : getTransference_waitstart_queue()) {
+            for (final Transference t1 : this.getTransference_waitstart_queue()) {
 
                 if (t1 != t) {
                     wait_array.add(t1);
@@ -401,37 +427,37 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
             wait_array.add(t);
 
-            getTransference_waitstart_queue().clear();
+            this.getTransference_waitstart_queue().clear();
 
-            getTransference_waitstart_queue().addAll(wait_array);
+            this.getTransference_waitstart_queue().addAll(wait_array);
 
-            getTransference_waitstart_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
-            getTransference_finished_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
+//            this.getTransference_waitstart_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
+//            this.getTransference_finished_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
         }
 
-        secureNotify();
+        this.secureNotify();
 
     }
 
-    public void upWaitQueue(Transference t) {
+    public void upWaitQueue(final Transference t) {
 
-        synchronized (getWait_queue_lock()) {
+        synchronized (this.getWait_queue_lock()) {
 
-            ArrayList<Transference> wait_array = new ArrayList(getTransference_waitstart_queue());
+            final ArrayList<Transference> wait_array = new ArrayList(this.getTransference_waitstart_queue());
 
             int pos = 0;
 
-            for (Transference t1 : wait_array) {
+            for (final Transference t1 : wait_array) {
 
                 if (t1 == t) {
                     break;
@@ -444,37 +470,37 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                 Collections.swap(wait_array, pos, pos - 1);
             }
 
-            getTransference_waitstart_queue().clear();
+            this.getTransference_waitstart_queue().clear();
 
-            getTransference_waitstart_queue().addAll(wait_array);
+            this.getTransference_waitstart_queue().addAll(wait_array);
 
-            getTransference_waitstart_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
-            getTransference_finished_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
+//            this.getTransference_waitstart_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
+//            this.getTransference_finished_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
         }
 
-        secureNotify();
+        this.secureNotify();
 
     }
 
-    public void downWaitQueue(Transference t) {
+    public void downWaitQueue(final Transference t) {
 
-        synchronized (getWait_queue_lock()) {
+        synchronized (this.getWait_queue_lock()) {
 
-            ArrayList<Transference> wait_array = new ArrayList(getTransference_waitstart_queue());
+            final ArrayList<Transference> wait_array = new ArrayList(this.getTransference_waitstart_queue());
 
             int pos = 0;
 
-            for (Transference t1 : wait_array) {
+            for (final Transference t1 : wait_array) {
 
                 if (t1 == t) {
                     break;
@@ -487,37 +513,37 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                 Collections.swap(wait_array, pos, pos + 1);
             }
 
-            getTransference_waitstart_queue().clear();
+            this.getTransference_waitstart_queue().clear();
 
-            getTransference_waitstart_queue().addAll(wait_array);
+            this.getTransference_waitstart_queue().addAll(wait_array);
 
-            getTransference_waitstart_queue().forEach((t1) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t1.getView());
-                    getScroll_panel().add((Component) t1.getView());
-                });
-            });
-            getTransference_finished_queue().forEach((t2) -> {
-                MiscTools.GUIRun(() -> {
-                    getScroll_panel().remove((Component) t2.getView());
-                    getScroll_panel().add((Component) t2.getView());
-                });
-            });
+//            this.getTransference_waitstart_queue().forEach((t1) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t1.getView());
+//                    this.getScroll_panel().add((Component) t1.getView());
+//                });
+//            });
+//            this.getTransference_finished_queue().forEach((t2) -> {
+//                MiscTools.GUIRun(() -> {
+//                    this.getScroll_panel().remove((Component) t2.getView());
+//                    this.getScroll_panel().add((Component) t2.getView());
+//                });
+//            });
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
     public void start(final Transference transference) {
 
-        _transference_running_list.add(transference);
+        this._transference_running_list.add(transference);
 
         transference.start();
     }
 
     public void pauseAll() {
 
-        _transference_running_list.forEach((transference) -> {
+        this._transference_running_list.forEach((transference) -> {
 
             if (!transference.isPaused()) {
                 transference.pause();
@@ -525,7 +551,7 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
         });
 
-        secureNotify();
+        this.secureNotify();
 
         THREAD_POOL.execute(() -> {
 
@@ -535,7 +561,7 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
                 running = false;
 
-                for (Transference t : _transference_running_list) {
+                for (final Transference t : this._transference_running_list) {
                     if (t.getPausedWorkers() != t.getTotWorkers()) {
                         running = true;
                         break;
@@ -543,11 +569,11 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                 }
 
                 if (running) {
-                    synchronized (_pause_all_lock) {
+                    synchronized (this._pause_all_lock) {
 
                         try {
-                            _pause_all_lock.wait(1000);
-                        } catch (InterruptedException ex) {
+                            this._pause_all_lock.wait(1000);
+                        } catch (final InterruptedException ex) {
                             Logger.getLogger(TransferenceManager.class.getName()).log(Level.SEVERE, null, ex);
                         }
 
@@ -556,16 +582,16 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
             } while (running);
 
-            _paused_all = true;
+            this._paused_all = true;
 
-            MiscTools.GUIRun(() -> {
+//            MiscTools.GUIRun(() -> {
+//
+//                this._pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("RESUME ALL"));
+//                this._pause_all_button.setEnabled(true);
+//
+//            });
 
-                _pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("RESUME ALL"));
-                _pause_all_button.setEnabled(true);
-
-            });
-
-            secureNotify();
+            this.secureNotify();
 
         });
 
@@ -573,7 +599,7 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
     public void resumeAll() {
 
-        _transference_running_list.forEach((transference) -> {
+        this._transference_running_list.forEach((transference) -> {
 
             if (transference.isPaused()) {
                 transference.pause();
@@ -581,29 +607,29 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
         });
 
-        _paused_all = false;
+        this._paused_all = false;
 
-        MiscTools.GUIRun(() -> {
+//        MiscTools.GUIRun(() -> {
+//
+//            this._pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE ALL"));
+//
+//            this._pause_all_button.setEnabled(true);
+//
+//        });
 
-            _pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE ALL"));
-
-            _pause_all_button.setEnabled(true);
-
-        });
-
-        secureNotify();
+        this.secureNotify();
     }
 
     protected boolean hasFrozenTransferences() {
 
-        for (Transference t : getTransference_waitstart_queue()) {
+        for (final Transference t : this.getTransference_waitstart_queue()) {
 
             if (t.isFrozen()) {
                 return true;
             }
         }
 
-        for (Transference t : getTransference_waitstart_aux_queue()) {
+        for (final Transference t : this.getTransference_waitstart_aux_queue()) {
 
             if (t.isFrozen()) {
                 return true;
@@ -614,14 +640,14 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
     }
 
     public ConcurrentLinkedQueue<Transference> getTransference_waitstart_aux_queue() {
-        return _transference_waitstart_aux_queue;
+        return this._transference_waitstart_aux_queue;
     }
 
-    protected void sortTransferenceQueue(ConcurrentLinkedQueue<Transference> queue) {
+    protected void sortTransferenceQueue(final ConcurrentLinkedQueue<Transference> queue) {
 
-        synchronized (_transference_queue_sort_lock) {
+        synchronized (this._transference_queue_sort_lock) {
 
-            ArrayList<Transference> trans_list = new ArrayList(queue);
+            final ArrayList<Transference> trans_list = new ArrayList(queue);
 
             trans_list.sort((Transference o1, Transference o2) -> MiscTools.naturalCompare(o1.getFile_name(), o2.getFile_name(), true));
 
@@ -633,85 +659,85 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
     protected void unfreezeTransferenceWaitStartQueue() {
 
-        synchronized (getTransference_waitstart_aux_queue()) {
+        synchronized (this.getTransference_waitstart_aux_queue()) {
 
-            getTransference_waitstart_queue().forEach((t) -> {
+            this.getTransference_waitstart_queue().forEach((t) -> {
                 t.unfreeze();
             });
 
-            getTransference_waitstart_aux_queue().forEach((t) -> {
+            this.getTransference_waitstart_aux_queue().forEach((t) -> {
                 t.unfreeze();
             });
         }
 
-        secureNotify();
+        this.secureNotify();
     }
 
     private void _updateView() {
 
-        MiscTools.GUIRun(() -> {
-
-            if (this instanceof DownloadManager) {
-
-                _main_panel.getView().getForce_chunk_reset_button().setVisible(MainPanel.isUse_smart_proxy() && !getTransference_running_list().isEmpty());
-                _main_panel.getView().getCancel_all_downloads_menu().setEnabled(!_transference_preprocess_queue.isEmpty() || !_transference_provision_queue.isEmpty() || !getTransference_waitstart_queue().isEmpty() || !getTransference_running_list().isEmpty());
-                _main_panel.getView().getDownload_status_bar().setVisible(!_transference_preprocess_global_queue.isEmpty() || !_transference_preprocess_queue.isEmpty() || !_transference_provision_queue.isEmpty());
-
-            } else {
-                _main_panel.getView().getUpload_status_bar().setVisible(!_transference_preprocess_global_queue.isEmpty() || !_transference_preprocess_queue.isEmpty() || !_transference_provision_queue.isEmpty());
-            }
-
-            if (_paused_all) {
-                _pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("RESUME ALL"));
-            } else {
-                _pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE ALL"));
-                _pause_all_button.setVisible(!getTransference_running_list().isEmpty());
-            }
-
-            _clean_all_menu.getComponent().setEnabled(!_transference_preprocess_queue.isEmpty() || !_transference_provision_queue.isEmpty() || !getTransference_waitstart_queue().isEmpty());
-
-            if (!_transference_finished_queue.isEmpty()) {
-
-                _close_all_button.setText(LabelTranslatorSingleton.getInstance().translate("Clear finished"));
-
-                _close_all_button.setVisible(true);
-
-            } else {
-
-                _close_all_button.setVisible(false);
-            }
-
-            _status.setText(_genStatus());
-
-            _main_panel.getView().getUnfreeze_transferences_button().setVisible(_main_panel.getDownload_manager().hasFrozenTransferences() || _main_panel.getUpload_manager().hasFrozenTransferences());
-
-            _main_panel.getView().revalidate();
-
-            _main_panel.getView().repaint();
-        });
+//        MiscTools.GUIRun(() -> {
+//
+//            if (this instanceof DownloadManager) {
+//
+//                this._main_panel.getView().getForce_chunk_reset_button().setVisible(MainPanel.isUse_smart_proxy() && !this.getTransference_running_list().isEmpty());
+//                this._main_panel.getView().getCancel_all_downloads_menu().setEnabled(!this._transference_preprocess_queue.isEmpty() || !this._transference_provision_queue.isEmpty() || !this.getTransference_waitstart_queue().isEmpty() || !this.getTransference_running_list().isEmpty());
+//                this._main_panel.getView().getDownload_status_bar().setVisible(!this._transference_preprocess_global_queue.isEmpty() || !this._transference_preprocess_queue.isEmpty() || !this._transference_provision_queue.isEmpty());
+//
+//            } else {
+//                this._main_panel.getView().getUpload_status_bar().setVisible(!this._transference_preprocess_global_queue.isEmpty() || !this._transference_preprocess_queue.isEmpty() || !this._transference_provision_queue.isEmpty());
+//            }
+//
+//            if (this._paused_all) {
+//                this._pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("RESUME ALL"));
+//            } else {
+//                this._pause_all_button.setText(LabelTranslatorSingleton.getInstance().translate("PAUSE ALL"));
+//                this._pause_all_button.setVisible(!this.getTransference_running_list().isEmpty());
+//            }
+//
+//            this._clean_all_menu.getComponent().setEnabled(!this._transference_preprocess_queue.isEmpty() || !this._transference_provision_queue.isEmpty() || !this.getTransference_waitstart_queue().isEmpty());
+//
+//            if (!this._transference_finished_queue.isEmpty()) {
+//
+//                this._close_all_button.setText(LabelTranslatorSingleton.getInstance().translate("Clear finished"));
+//
+//                this._close_all_button.setVisible(true);
+//
+//            } else {
+//
+//                this._close_all_button.setVisible(false);
+//            }
+//
+//            this._status.setText(this._genStatus());
+//
+//            this._main_panel.getView().getUnfreeze_transferences_button().setVisible(this._main_panel.getDownload_manager().hasFrozenTransferences() || this._main_panel.getUpload_manager().hasFrozenTransferences());
+//
+//            this._main_panel.getView().revalidate();
+//
+//            this._main_panel.getView().repaint();
+//        });
     }
 
     private String _genStatus() {
 
-        int pre = _transference_preprocess_global_queue.size();
+        final int pre = this._transference_preprocess_global_queue.size();
 
-        int prov = _transference_provision_queue.size();
+        final int prov = this._transference_provision_queue.size();
 
-        int rem = _transference_remove_queue.size();
+        final int rem = this._transference_remove_queue.size();
 
-        int wait = _transference_waitstart_queue.size() + _transference_waitstart_aux_queue.size();
+        final int wait = this._transference_waitstart_queue.size() + this._transference_waitstart_aux_queue.size();
 
-        int run = _transference_running_list.size();
+        final int run = this._transference_running_list.size();
 
-        int finish = _transference_finished_queue.size();
+        final int finish = this._transference_finished_queue.size();
 
-        if (!_all_finished && !_tray_icon_finish && finish > 0 && pre + prov + wait + run == 0 && !_main_panel.getView().isVisible()) {
+        if (!this._all_finished && !this._tray_icon_finish && finish > 0 && pre + prov + wait + run == 0 && !this._main_panel.getView().isVisible()) {
 
-            _tray_icon_finish = true;
+            this._tray_icon_finish = true;
 
-            _all_finished = true;
+            this._all_finished = true;
 
-            _main_panel.getTrayicon().displayMessage("MegaBasterd says:", "All your transferences have finished", TrayIcon.MessageType.INFO);
+//            this._main_panel.getTrayicon().displayMessage("MegaBasterd says:", "All your transferences have finished", TrayIcon.MessageType.INFO);
         }
 
         return (pre + prov + rem + wait + run + finish > 0) ? LabelTranslatorSingleton.getInstance().translate("Pre:") + " " + pre + " / " + LabelTranslatorSingleton.getInstance().translate("Pro:") + " " + prov + " / " + LabelTranslatorSingleton.getInstance().translate("Wait:") + " " + wait + " / " + LabelTranslatorSingleton.getInstance().translate("Run:") + " " + run + " / " + LabelTranslatorSingleton.getInstance().translate("Finish:") + " " + finish + " / " + LabelTranslatorSingleton.getInstance().translate("Rem:") + " " + rem : "";
@@ -719,7 +745,7 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
     private boolean _isOKFinishedInQueue() {
 
-        return _transference_finished_queue.stream().anyMatch((t) -> (!t.isStatusError() && !t.isCanceled()));
+        return this._transference_finished_queue.stream().anyMatch((t) -> (!t.isStatusError() && !t.isCanceled()));
     }
 
     @Override
@@ -727,40 +753,40 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
         while (true) {
 
-            if (!isRemoving_transferences() && !getTransference_remove_queue().isEmpty()) {
+            if (!this.isRemoving_transferences() && !this.getTransference_remove_queue().isEmpty()) {
 
-                setRemoving_transferences(true);
+                this.setRemoving_transferences(true);
 
                 THREAD_POOL.execute(() -> {
 
-                    if (!getTransference_remove_queue().isEmpty()) {
+                    if (!this.getTransference_remove_queue().isEmpty()) {
 
-                        ArrayList<Transference> transferences = new ArrayList(getTransference_remove_queue());
+                        final ArrayList<Transference> transferences = new ArrayList(this.getTransference_remove_queue());
 
-                        getTransference_remove_queue().clear();
+                        this.getTransference_remove_queue().clear();
 
-                        remove(transferences.toArray(new Transference[transferences.size()]));
+                        this.remove(transferences.toArray(new Transference[transferences.size()]));
                     }
 
-                    setRemoving_transferences(false);
+                    this.setRemoving_transferences(false);
 
-                    secureNotify();
+                    this.secureNotify();
                 });
             }
 
-            if (!isPreprocessing_transferences() && !getTransference_preprocess_queue().isEmpty()) {
+            if (!this.isPreprocessing_transferences() && !this.getTransference_preprocess_queue().isEmpty()) {
 
-                setPreprocessing_transferences(true);
+                this.setPreprocessing_transferences(true);
 
-                if (isPaused_all()) {
+                if (this.isPaused_all()) {
 
-                    _paused_all = false;
+                    this._paused_all = false;
                 }
 
                 THREAD_POOL.execute(() -> {
 
-                    while (!getTransference_preprocess_queue().isEmpty()) {
-                        Runnable run = getTransference_preprocess_queue().poll();
+                    while (!this.getTransference_preprocess_queue().isEmpty()) {
+                        final Runnable run = this.getTransference_preprocess_queue().poll();
 
                         if (run != null) {
 
@@ -771,7 +797,7 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
                                 try {
                                     run.run();
-                                } catch (Exception ex) {
+                                } catch (final Exception ex) {
                                     run_error = true;
                                     LOG.log(SEVERE, null, ex);
                                 }
@@ -779,33 +805,33 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                         }
                     }
 
-                    setPreprocessing_transferences(false);
+                    this.setPreprocessing_transferences(false);
 
-                    synchronized (getTransference_preprocess_queue()) {
-                        getTransference_preprocess_queue().notifyAll();
+                    synchronized (this.getTransference_preprocess_queue()) {
+                        this.getTransference_preprocess_queue().notifyAll();
                     }
 
-                    secureNotify();
+                    this.secureNotify();
                 });
             }
 
-            if (!isRemoving_transferences() && !isProvisioning_transferences() && !getTransference_provision_queue().isEmpty()) {
+            if (!this.isRemoving_transferences() && !this.isProvisioning_transferences() && !this.getTransference_provision_queue().isEmpty()) {
 
-                setProvisioning_transferences(true);
+                this.setProvisioning_transferences(true);
 
-                _tray_icon_finish = false;
+                this._tray_icon_finish = false;
 
                 THREAD_POOL.execute(() -> {
 
-                    ExecutorService executor = Executors.newFixedThreadPool(MAX_PROVISION_WORKERS);
+                    final ExecutorService executor = Executors.newFixedThreadPool(MAX_PROVISION_WORKERS);
 
-                    BoundedExecutor bounded_executor = new BoundedExecutor(executor, MAX_PROVISION_WORKERS);
+                    final BoundedExecutor bounded_executor = new BoundedExecutor(executor, MAX_PROVISION_WORKERS);
 
-                    while (!getTransference_provision_queue().isEmpty() || isPreprocessing_transferences()) {
+                    while (!this.getTransference_provision_queue().isEmpty() || this.isPreprocessing_transferences()) {
 
-                        if (getTransference_waitstart_aux_queue().size() < MAX_WAIT_QUEUE && getTransference_waitstart_queue().size() < MAX_WAIT_QUEUE) {
+                        if (this.getTransference_waitstart_aux_queue().size() < MAX_WAIT_QUEUE && this.getTransference_waitstart_queue().size() < MAX_WAIT_QUEUE) {
 
-                            Transference transference = getTransference_provision_queue().poll();
+                            final Transference transference = this.getTransference_provision_queue().poll();
 
                             if (transference != null) {
 
@@ -816,27 +842,29 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
 
                                     try {
                                         bounded_executor.submitTask(() -> {
-                                            provision(transference);
+                                            this.provision(transference);
 
                                             if (this instanceof DownloadManager) {
-                                                MiscTools.GUIRun(() -> {
-
-                                                    _main_panel.getView().getDownload_status_bar().setIndeterminate(false);
-                                                    _main_panel.getView().getDownload_status_bar().setValue(_main_panel.getView().getDownload_status_bar().getValue() + 1);
-                                                    _main_panel.getView().getDownload_status_bar().setVisible((_main_panel.getView().getDownload_status_bar().getValue() < _main_panel.getView().getDownload_status_bar().getMaximum()));
-
-                                                });
-                                            } else {
-                                                MiscTools.GUIRun(() -> {
-
-                                                    _main_panel.getView().getUpload_status_bar().setIndeterminate(false);
-                                                    _main_panel.getView().getUpload_status_bar().setValue(_main_panel.getView().getUpload_status_bar().getValue() + 1);
-                                                    _main_panel.getView().getUpload_status_bar().setVisible((_main_panel.getView().getUpload_status_bar().getValue() < _main_panel.getView().getUpload_status_bar().getMaximum()));
-
-                                                });
+                                                ((Download) transference).start();
                                             }
+//                                                MiscTools.GUIRun(() -> {
+//
+//                                                    this._main_panel.getView().getDownload_status_bar().setIndeterminate(false);
+//                                                    this._main_panel.getView().getDownload_status_bar().setValue(this._main_panel.getView().getDownload_status_bar().getValue() + 1);
+//                                                    this._main_panel.getView().getDownload_status_bar().setVisible((this._main_panel.getView().getDownload_status_bar().getValue() < this._main_panel.getView().getDownload_status_bar().getMaximum()));
+//
+//                                                });
+//                                            } else {
+//                                                MiscTools.GUIRun(() -> {
+//
+//                                                    this._main_panel.getView().getUpload_status_bar().setIndeterminate(false);
+//                                                    this._main_panel.getView().getUpload_status_bar().setValue(this._main_panel.getView().getUpload_status_bar().getValue() + 1);
+//                                                    this._main_panel.getView().getUpload_status_bar().setVisible((this._main_panel.getView().getUpload_status_bar().getValue() < this._main_panel.getView().getUpload_status_bar().getMaximum()));
+//
+//                                                });
+//                                            }
                                         });
-                                    } catch (InterruptedException ex) {
+                                    } catch (final InterruptedException ex) {
                                         Logger.getLogger(TransferenceManager.class.getName()).log(Level.SEVERE, null, ex);
                                         error = true;
                                         MiscTools.pausar(1000);
@@ -845,12 +873,12 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                             }
                         }
 
-                        if (isPreprocessing_transferences() || getTransference_waitstart_aux_queue().size() >= MAX_WAIT_QUEUE || getTransference_waitstart_queue().size() >= MAX_WAIT_QUEUE) {
+                        if (this.isPreprocessing_transferences() || this.getTransference_waitstart_aux_queue().size() >= MAX_WAIT_QUEUE || this.getTransference_waitstart_queue().size() >= MAX_WAIT_QUEUE) {
 
-                            synchronized (getTransference_preprocess_queue()) {
+                            synchronized (this.getTransference_preprocess_queue()) {
                                 try {
-                                    getTransference_preprocess_queue().wait(1000);
-                                } catch (InterruptedException ex) {
+                                    this.getTransference_preprocess_queue().wait(1000);
+                                } catch (final InterruptedException ex) {
                                     Logger.getLogger(TransferenceManager.class.getName()).log(Level.SEVERE, null, ex);
                                 }
                             }
@@ -863,93 +891,93 @@ abstract public class TransferenceManager implements Runnable, SecureSingleThrea
                         MiscTools.pausar(1000);
                     }
 
-                    synchronized (_transference_queue_sort_lock) {
+                    synchronized (this._transference_queue_sort_lock) {
 
-                        if (getSort_wait_start_queue()) {
-                            sortTransferenceQueue(getTransference_waitstart_aux_queue());
+                        if (this.getSort_wait_start_queue()) {
+                            this.sortTransferenceQueue(this.getTransference_waitstart_aux_queue());
                         }
 
-                        if (getTransference_waitstart_aux_queue().peek() != null && getTransference_waitstart_aux_queue().peek().isPriority()) {
+                        if (this.getTransference_waitstart_aux_queue().peek() != null && this.getTransference_waitstart_aux_queue().peek().isPriority()) {
 
-                            ArrayList<Transference> trans_list = new ArrayList(getTransference_waitstart_queue());
+                            final ArrayList<Transference> trans_list = new ArrayList(this.getTransference_waitstart_queue());
 
-                            trans_list.addAll(0, getTransference_waitstart_aux_queue());
+                            trans_list.addAll(0, this.getTransference_waitstart_aux_queue());
 
-                            getTransference_waitstart_queue().clear();
+                            this.getTransference_waitstart_queue().clear();
 
-                            getTransference_waitstart_queue().addAll(trans_list);
+                            this.getTransference_waitstart_queue().addAll(trans_list);
 
                         } else {
-                            getTransference_waitstart_queue().addAll(getTransference_waitstart_aux_queue());
+                            this.getTransference_waitstart_queue().addAll(this.getTransference_waitstart_aux_queue());
                         }
 
-                        getTransference_waitstart_aux_queue().clear();
+                        this.getTransference_waitstart_aux_queue().clear();
 
-                        getTransference_waitstart_queue().forEach((t) -> {
-                            MiscTools.GUIRun(() -> {
-                                getScroll_panel().remove((Component) t.getView());
-                                getScroll_panel().add((Component) t.getView());
-                            });
-                        });
+//                        this.getTransference_waitstart_queue().forEach((t) -> {
+//                            MiscTools.GUIRun(() -> {
+//                                this.getScroll_panel().remove((Component) t.getView());
+//                                this.getScroll_panel().add((Component) t.getView());
+//                            });
+//                        });
 
-                        sortTransferenceQueue(getTransference_finished_queue());
+                        this.sortTransferenceQueue(this.getTransference_finished_queue());
 
-                        getTransference_finished_queue().forEach((t) -> {
-                            MiscTools.GUIRun(() -> {
-                                getScroll_panel().remove((Component) t.getView());
-                                getScroll_panel().add((Component) t.getView());
-                            });
-                        });
+//                        this.getTransference_finished_queue().forEach((t) -> {
+//                            MiscTools.GUIRun(() -> {
+//                                this.getScroll_panel().remove((Component) t.getView());
+//                                this.getScroll_panel().add((Component) t.getView());
+//                            });
+//                        });
 
                     }
 
-                    setSort_wait_start_queue(true);
-                    setProvisioning_transferences(false);
-                    secureNotify();
+                    this.setSort_wait_start_queue(true);
+                    this.setProvisioning_transferences(false);
+                    this.secureNotify();
                 });
 
             }
 
-            if (!_main_panel.isExit() && !_paused_all && !isRemoving_transferences() && !isStarting_transferences() && (!getTransference_waitstart_queue().isEmpty() || !getTransference_waitstart_aux_queue().isEmpty()) && getTransference_running_list().size() < _max_running_trans) {
+            if (!this._main_panel.isExit() && !this._paused_all && !this.isRemoving_transferences() && !this.isStarting_transferences() && (!this.getTransference_waitstart_queue().isEmpty() || !this.getTransference_waitstart_aux_queue().isEmpty()) && this.getTransference_running_list().size() < this._max_running_trans) {
 
-                setStarting_transferences(true);
+                this.setStarting_transferences(true);
 
                 THREAD_POOL.execute(() -> {
 
-                    while (!_main_panel.isExit() && !_paused_all && (!getTransference_waitstart_queue().isEmpty() || !getTransference_waitstart_aux_queue().isEmpty()) && getTransference_running_list().size() < _max_running_trans) {
+                    while (!this._main_panel.isExit() && !this._paused_all && (!this.getTransference_waitstart_queue().isEmpty() || !this.getTransference_waitstart_aux_queue().isEmpty()) && this.getTransference_running_list().size() < this._max_running_trans) {
 
-                        synchronized (_transference_queue_sort_lock) {
-                            Transference transference = getTransference_waitstart_queue().peek();
+                        synchronized (this._transference_queue_sort_lock) {
+                            Transference transference = this.getTransference_waitstart_queue().peek();
 
                             if (transference == null) {
-                                transference = getTransference_waitstart_aux_queue().peek();
+                                transference = this.getTransference_waitstart_aux_queue().peek();
                             }
 
                             if (transference != null && !transference.isFrozen()) {
 
-                                getTransference_waitstart_queue().remove(transference);
+                                this.getTransference_waitstart_queue().remove(transference);
 
-                                getTransference_waitstart_aux_queue().remove(transference);
+                                this.getTransference_waitstart_aux_queue().remove(transference);
 
-                                start(transference);
+                                this.start(transference);
 
                             }
                         }
                     }
 
-                    synchronized (getWait_queue_lock()) {
-                        getWait_queue_lock().notifyAll();
+                    synchronized (this.getWait_queue_lock()) {
+                        this.getWait_queue_lock().notifyAll();
                     }
 
-                    setStarting_transferences(false);
+                    this.setStarting_transferences(false);
 
-                    secureNotify();
+                    this.secureNotify();
                 });
             }
 
-            secureWait();
+            this.secureWait();
 
-            _updateView();
+            this._updateView();
         }
 
     }

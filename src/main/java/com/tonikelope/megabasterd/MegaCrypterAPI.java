@@ -11,8 +11,8 @@ package com.tonikelope.megabasterd;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import static com.tonikelope.megabasterd.CryptTools.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
+
+import javax.crypto.Cipher;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,18 +21,23 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.crypto.Cipher;
-import javax.swing.JOptionPane;
+
+import static com.tonikelope.megabasterd.CryptTools.aes_cbc_decrypt_pkcs7;
+import static com.tonikelope.megabasterd.CryptTools.genDecrypter;
+import static com.tonikelope.megabasterd.MiscTools.BASE642Bin;
+import static com.tonikelope.megabasterd.MiscTools.Bin2BASE64;
+import static com.tonikelope.megabasterd.MiscTools.Bin2UrlBASE64;
+import static com.tonikelope.megabasterd.MiscTools.cleanFilePath;
+import static com.tonikelope.megabasterd.MiscTools.cleanFilename;
+import static com.tonikelope.megabasterd.MiscTools.findFirstRegex;
 
 /**
- *
  * @author tonikelope
  */
 public class MegaCrypterAPI {
@@ -41,7 +46,7 @@ public class MegaCrypterAPI {
     public static final Object PASS_LOCK = new Object();
     private static final Logger LOG = Logger.getLogger(MegaCrypterAPI.class.getName());
 
-    private static String _rawRequest(String request, URL url_api) throws MegaCrypterAPIException {
+    private static String _rawRequest(final String request, final URL url_api) throws MegaCrypterAPIException {
 
         String response = null;
 
@@ -81,9 +86,9 @@ public class MegaCrypterAPI {
 
             } else {
 
-                try (InputStream is = con.getInputStream(); ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
+                try (final InputStream is = con.getInputStream(); final ByteArrayOutputStream byte_res = new ByteArrayOutputStream()) {
 
-                    byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
+                    final byte[] buffer = new byte[MainPanel.DEFAULT_BYTE_BUFFER_SIZE];
 
                     int reads;
 
@@ -96,7 +101,7 @@ public class MegaCrypterAPI {
 
                     if (response.length() > 0) {
 
-                        int mc_error;
+                        final int mc_error;
 
                         if ((mc_error = MegaCrypterAPI.checkMCError(response)) != 0) {
                             throw new MegaCrypterAPIException(mc_error);
@@ -106,7 +111,7 @@ public class MegaCrypterAPI {
                 }
             }
 
-        } catch (IOException ex) {
+        } catch (final IOException ex) {
             Logger.getLogger(MegaCrypterAPI.class.getName()).log(Level.SEVERE, ex.getMessage());
         } finally {
 
@@ -119,28 +124,28 @@ public class MegaCrypterAPI {
 
     }
 
-    public static String getMegaFileDownloadUrl(String link, String pass_hash, String noexpire_token, String sid, String reverse) throws IOException, MegaCrypterAPIException {
-        String request = "{\"m\":\"dl\", \"link\": \"" + link + "\"" + (noexpire_token != null ? ", \"noexpire\": \"" + noexpire_token + "\"" : "") + (sid != null ? ", \"sid\": \"" + sid + "\"" : "") + (reverse != null ? ", \"reverse\": \"" + reverse + "\"" : "") + "}";
+    public static String getMegaFileDownloadUrl(final String link, final String pass_hash, final String noexpire_token, final String sid, final String reverse) throws IOException, MegaCrypterAPIException {
+        final String request = "{\"m\":\"dl\", \"link\": \"" + link + "\"" + (noexpire_token != null ? ", \"noexpire\": \"" + noexpire_token + "\"" : "") + (sid != null ? ", \"sid\": \"" + sid + "\"" : "") + (reverse != null ? ", \"reverse\": \"" + reverse + "\"" : "") + "}";
 
-        URL url_api = new URL(findFirstRegex("https?://[^/]+", link, 0) + "/api");
+        final URL url_api = new URL(findFirstRegex("https?://[^/]+", link, 0) + "/api");
 
-        String res = MegaCrypterAPI._rawRequest(request, url_api);
+        final String res = MegaCrypterAPI._rawRequest(request, url_api);
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = new ObjectMapper();
 
-        HashMap res_map = objectMapper.readValue(res, HashMap.class);
+        final HashMap res_map = objectMapper.readValue(res, HashMap.class);
 
         String dl_url = (String) res_map.get("url");
 
         if (pass_hash != null) {
             try {
-                String pass = (String) res_map.get("pass");
+                final String pass = (String) res_map.get("pass");
 
-                byte[] decrypted_url = aes_cbc_decrypt_pkcs7(BASE642Bin(dl_url), BASE642Bin(pass_hash), BASE642Bin(pass));
+                final byte[] decrypted_url = aes_cbc_decrypt_pkcs7(BASE642Bin(dl_url), BASE642Bin(pass_hash), BASE642Bin(pass));
 
                 dl_url = new String(decrypted_url, "UTF-8");
 
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 throw new MegaCrypterAPIException(25);
             }
         }
@@ -152,26 +157,26 @@ public class MegaCrypterAPI {
         return dl_url;
     }
 
-    public static String[] getMegaFileMetadata(String link, MainPanelView panel, String reverse) throws MegaCrypterAPIException, MalformedURLException, IOException {
-        String request = "{\"m\":\"info\", \"link\": \"" + link + "\"" + (reverse != null ? ", \"reverse\": \"" + reverse + "\"" : "") + "}";
+    public static String[] getMegaFileMetadata(final String link, final MainPanelView panel, final String reverse) throws MegaCrypterAPIException, MalformedURLException, IOException {
+        final String request = "{\"m\":\"info\", \"link\": \"" + link + "\"" + (reverse != null ? ", \"reverse\": \"" + reverse + "\"" : "") + "}";
 
-        URL url_api = new URL(findFirstRegex("https?://[^/]+", link, 0) + "/api");
+        final URL url_api = new URL(findFirstRegex("https?://[^/]+", link, 0) + "/api");
 
-        String res = MegaCrypterAPI._rawRequest(request, url_api);
+        final String res = MegaCrypterAPI._rawRequest(request, url_api);
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectMapper objectMapper = new ObjectMapper();
 
         objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
 
         objectMapper.configure(JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
 
-        HashMap res_map = objectMapper.readValue(res, HashMap.class);
+        final HashMap res_map = objectMapper.readValue(res, HashMap.class);
 
         String fname = cleanFilename((String) res_map.get("name"));
 
         String fpath = null;
 
-        Object fpath_val = res_map.get("path");
+        final Object fpath_val = res_map.get("path");
 
         if (fpath_val instanceof Boolean) {
 
@@ -188,7 +193,7 @@ public class MegaCrypterAPI {
 
             file_size = String.valueOf(res_map.get("size"));
 
-        } catch (java.lang.ClassCastException ex) {
+        } catch (final java.lang.ClassCastException ex) {
 
             file_size = String.valueOf(res_map.get("size"));
         }
@@ -197,7 +202,7 @@ public class MegaCrypterAPI {
 
         String noexpire_token = null;
 
-        Object expire_val = res_map.get("expire");
+        final Object expire_val = res_map.get("expire");
 
         if (expire_val instanceof Boolean) {
 
@@ -205,12 +210,12 @@ public class MegaCrypterAPI {
 
         } else if (expire_val instanceof String) {
 
-            String aux[] = ((String) expire_val).split("#");
+            final String[] aux = ((String) expire_val).split("#");
 
             noexpire_token = aux[1];
         }
 
-        Object pass_val = res_map.get("pass");
+        final Object pass_val = res_map.get("pass");
 
         String pass = null;
 
@@ -224,23 +229,23 @@ public class MegaCrypterAPI {
         }
 
         if (pass != null) {
-            String[] pass_items = pass.split("#");
+            final String[] pass_items = pass.split("#");
 
             if (pass_items.length != 4) {
                 throw new MegaCrypterAPIException(25);
             }
 
-            int iterations = Integer.parseInt(pass_items[0]);
+            final int iterations = Integer.parseInt(pass_items[0]);
 
-            byte[] key_check = BASE642Bin(pass_items[1]);
+            final byte[] key_check = BASE642Bin(pass_items[1]);
 
-            byte[] salt = BASE642Bin(pass_items[2]);
+            final byte[] salt = BASE642Bin(pass_items[2]);
 
-            byte[] iv = BASE642Bin(pass_items[3]);
+            final byte[] iv = BASE642Bin(pass_items[3]);
 
             String password;
 
-            byte[] info_key = null;
+            final byte[] info_key = null;
 
             boolean bad_pass;
 
@@ -248,87 +253,87 @@ public class MegaCrypterAPI {
 
             synchronized (PASS_LOCK) {
 
-                LinkedList<String> pass_list = new LinkedList(PASS_CACHE);
+                final LinkedList<String> pass_list = new LinkedList(PASS_CACHE);
 
-                do {
-                    bad_pass = true;
+//                do {
+//                    bad_pass = true;
 
-                    if ((password = pass_list.poll()) == null) {
+//                    if ((password = pass_list.poll()) == null) {
+//
+//                        password = JOptionPane.showInputDialog(panel, "Enter password for MegaCrypter link:");
+//                    }
 
-                        password = JOptionPane.showInputDialog(panel, "Enter password for MegaCrypter link:");
-                    }
+//                    if (password != null) {
+//
+//                        try {
+//
+//                            info_key = PBKDF2HMACSHA256(password, salt, (int) Math.pow(2, iterations), 256);
+//
+//                            decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
+//
+//                            bad_pass = !Arrays.equals(info_key, decrypter.doFinal(key_check));
+//
+//                            if (!bad_pass) {
+//
+//                                PASS_CACHE.add(password);
+//                            }
+//
+//                        } catch (Exception ex) {
+//
+//                            bad_pass = true;
+//                        }
+//                    }
 
-                    if (password != null) {
-
-                        try {
-
-                            info_key = PBKDF2HMACSHA256(password, salt, (int) Math.pow(2, iterations), 256);
-
-                            decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
-
-                            bad_pass = !Arrays.equals(info_key, decrypter.doFinal(key_check));
-
-                            if (!bad_pass) {
-
-                                PASS_CACHE.add(password);
-                            }
-
-                        } catch (Exception ex) {
-
-                            bad_pass = true;
-                        }
-                    }
-
-                } while (password != null && bad_pass);
+//                } while (password != null && bad_pass);
             }
 
-            if (bad_pass) {
+//            if (bad_pass) {
+//
+//                throw new MegaCrypterAPIException(25);
+//
+//            } else {
+
+            try {
+
+                decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
+
+                final byte[] decrypted_key = decrypter.doFinal(BASE642Bin(fkey));
+
+                fkey = Bin2UrlBASE64(decrypted_key);
+
+                decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
+
+                final byte[] decrypted_name = decrypter.doFinal(BASE642Bin(fname));
+
+                fname = new String(decrypted_name, "UTF-8");
+
+                if (fpath != null) {
+                    final byte[] decrypted_fpath = decrypter.doFinal(BASE642Bin(fpath));
+
+                    fpath = new String(decrypted_fpath, "UTF-8");
+                }
+
+                pass = Bin2BASE64(info_key);
+
+            } catch (final Exception ex) {
 
                 throw new MegaCrypterAPIException(25);
 
-            } else {
-
-                try {
-
-                    decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
-
-                    byte[] decrypted_key = decrypter.doFinal(BASE642Bin(fkey));
-
-                    fkey = Bin2UrlBASE64(decrypted_key);
-
-                    decrypter = genDecrypter("AES", "AES/CBC/PKCS5Padding", info_key, iv);
-
-                    byte[] decrypted_name = decrypter.doFinal(BASE642Bin(fname));
-
-                    fname = new String(decrypted_name, "UTF-8");
-
-                    if (fpath != null) {
-                        byte[] decrypted_fpath = decrypter.doFinal(BASE642Bin(fpath));
-
-                        fpath = new String(decrypted_fpath, "UTF-8");
-                    }
-
-                    pass = Bin2BASE64(info_key);
-
-                } catch (Exception ex) {
-
-                    throw new MegaCrypterAPIException(25);
-
-                }
             }
+//            }
         }
 
         if (fpath != null) {
             fname = fpath + fname;
         }
 
-        String file_data[] = {fname, file_size, fkey, pass, noexpire_token};
+        final String[] file_data = {fname, file_size, fkey, pass, noexpire_token};
 
         return file_data;
     }
 
-    private static int checkMCError(String data) {
-        String error = findFirstRegex("\"error\" *: *([0-9-]+)", data, 1);
+    private static int checkMCError(final String data) {
+        final String error = findFirstRegex("\"error\" *: *([0-9-]+)", data, 1);
 
         return error != null ? Integer.parseInt(error) : 0;
     }

@@ -9,22 +9,21 @@
  */
 package com.tonikelope.megabasterd;
 
-import static com.tonikelope.megabasterd.MainPanel.*;
-import static com.tonikelope.megabasterd.MiscTools.*;
-import java.awt.Dialog;
-import java.awt.HeadlessException;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JCheckBox;
-import javax.swing.JOptionPane;
-import javax.swing.JPasswordField;
+
+import static com.tonikelope.megabasterd.MainPanel.THREAD_POOL;
+import static com.tonikelope.megabasterd.MiscTools.BASE642Bin;
+import static com.tonikelope.megabasterd.MiscTools.Bin2BASE64;
+import static com.tonikelope.megabasterd.MiscTools.HashBin;
 
 /**
- *
  * @author tonikelope
  */
 public class GetMasterPasswordDialog extends javax.swing.JDialog {
@@ -38,51 +37,51 @@ public class GetMasterPasswordDialog extends javax.swing.JDialog {
     private byte[] _pass;
 
     public JPasswordField getNew_pass_textfield() {
-        return current_pass_textfield;
+        return this.current_pass_textfield;
     }
 
     public JCheckBox getRemember_checkbox() {
-        return remember_checkbox;
+        return this.remember_checkbox;
     }
 
     public boolean isPass_ok() {
-        return _pass_ok;
+        return this._pass_ok;
     }
 
     public byte[] getPass() {
-        return _pass;
+        return this._pass;
     }
 
     public void deletePass() {
 
-        if (_pass != null) {
+        if (this._pass != null) {
 
-            Arrays.fill(_pass, (byte) 0);
+            Arrays.fill(this._pass, (byte) 0);
         }
 
-        _pass = null;
+        this._pass = null;
     }
 
     /**
      * Creates new form MegaPassDialog
      */
-    public GetMasterPasswordDialog(java.awt.Frame parent, boolean modal, String current_pass_hash, String salt, MainPanel main_panel) {
+    public GetMasterPasswordDialog(final java.awt.Frame parent, final boolean modal, final String current_pass_hash, final String salt, final MainPanel main_panel) {
         super(parent, modal);
-        _current_pass_hash = current_pass_hash;
+        this._current_pass_hash = current_pass_hash;
 
-        _pass_ok = false;
+        this._pass_ok = false;
 
-        _pass = null;
+        this._pass = null;
 
-        _salt = salt;
+        this._salt = salt;
         MiscTools.GUIRunAndWait(() -> {
-            initComponents();
+            this.initComponents();
 
-            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
+//            updateFonts(this, GUI_FONT, main_panel.getZoom_factor());
 
-            translateLabels(this);
+//            translateLabels(this);
 
-            pack();
+            this.pack();
         });
 
     }
@@ -96,163 +95,166 @@ public class GetMasterPasswordDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        current_pass_textfield = new javax.swing.JPasswordField();
-        cancel_button = new javax.swing.JButton();
-        ok_button = new javax.swing.JButton();
-        lock_label = new javax.swing.JLabel();
-        please_label = new javax.swing.JLabel();
-        status_label = new javax.swing.JLabel();
-        remember_checkbox = new javax.swing.JCheckBox();
+        this.current_pass_textfield = new javax.swing.JPasswordField();
+        this.cancel_button = new javax.swing.JButton();
+        this.ok_button = new javax.swing.JButton();
+        this.lock_label = new javax.swing.JLabel();
+        this.please_label = new javax.swing.JLabel();
+        this.status_label = new javax.swing.JLabel();
+        this.remember_checkbox = new javax.swing.JCheckBox();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Master password unlock");
-        setModalExclusionType(java.awt.Dialog.ModalExclusionType.TOOLKIT_EXCLUDE);
+        this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        this.setTitle("Master password unlock");
+        this.setModalExclusionType(java.awt.Dialog.ModalExclusionType.TOOLKIT_EXCLUDE);
 
-        current_pass_textfield.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
-        current_pass_textfield.setDoubleBuffered(true);
-        current_pass_textfield.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        current_pass_textfield.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                current_pass_textfieldKeyPressed(evt);
+        this.current_pass_textfield.setFont(new java.awt.Font("Dialog", 0, 18)); // NOI18N
+        this.current_pass_textfield.setDoubleBuffered(true);
+        this.current_pass_textfield.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        this.current_pass_textfield.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(final java.awt.event.KeyEvent evt) {
+                GetMasterPasswordDialog.this.current_pass_textfieldKeyPressed(evt);
             }
         });
 
-        cancel_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        cancel_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
-        cancel_button.setText("CANCEL");
-        cancel_button.setDoubleBuffered(true);
-        cancel_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancel_buttonActionPerformed(evt);
+        this.cancel_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.cancel_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-cancel-30.png"))); // NOI18N
+        this.cancel_button.setText("CANCEL");
+        this.cancel_button.setDoubleBuffered(true);
+        this.cancel_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                GetMasterPasswordDialog.this.cancel_buttonActionPerformed(evt);
             }
         });
 
-        ok_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        ok_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/icons8-ok-30.png"))); // NOI18N
-        ok_button.setText("OK");
-        ok_button.setDoubleBuffered(true);
-        ok_button.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ok_buttonActionPerformed(evt);
+        this.ok_button.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        this.ok_button.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/icons8-ok-30.png"))); // NOI18N
+        this.ok_button.setText("OK");
+        this.ok_button.setDoubleBuffered(true);
+        this.ok_button.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(final java.awt.event.ActionEvent evt) {
+                GetMasterPasswordDialog.this.ok_buttonActionPerformed(evt);
             }
         });
 
-        lock_label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/lock_medium.png"))); // NOI18N
-        lock_label.setDoubleBuffered(true);
+        this.lock_label.setIcon(new javax.swing.ImageIcon(this.getClass().getResource("/images/lock_medium.png"))); // NOI18N
+        this.lock_label.setDoubleBuffered(true);
 
-        please_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        please_label.setText("Please, enter your master password");
-        please_label.setDoubleBuffered(true);
+        this.please_label.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        this.please_label.setText("Please, enter your master password");
+        this.please_label.setDoubleBuffered(true);
 
-        status_label.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        status_label.setDoubleBuffered(true);
+        this.status_label.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        this.status_label.setDoubleBuffered(true);
 
-        remember_checkbox.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
-        remember_checkbox.setSelected(true);
-        remember_checkbox.setText("Remember for this session");
-        remember_checkbox.setDoubleBuffered(true);
+        this.remember_checkbox.setFont(new java.awt.Font("Dialog", 0, 14)); // NOI18N
+        this.remember_checkbox.setSelected(true);
+        this.remember_checkbox.setText("Remember for this session");
+        this.remember_checkbox.setDoubleBuffered(true);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        final javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this.getContentPane());
+        this.getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ok_button)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cancel_button))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lock_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(current_pass_textfield)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(remember_checkbox)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(please_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.status_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.ok_button)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.cancel_button))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.lock_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                        .addComponent(this.current_pass_textfield)
+                                                        .addGroup(layout.createSequentialGroup()
+                                                                .addComponent(this.remember_checkbox)
+                                                                .addGap(0, 0, Short.MAX_VALUE))
+                                                        .addComponent(this.please_label, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(please_label)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(current_pass_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(remember_checkbox))
-                    .addComponent(lock_label))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 16, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(ok_button)
-                        .addComponent(cancel_button))
-                    .addComponent(status_label, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(this.please_label)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(this.current_pass_textfield, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                                .addComponent(this.remember_checkbox))
+                                        .addComponent(this.lock_label))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 16, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                                .addComponent(this.ok_button)
+                                                .addComponent(this.cancel_button))
+                                        .addComponent(this.status_label, javax.swing.GroupLayout.Alignment.TRAILING))
+                                .addContainerGap())
         );
 
-        pack();
+        this.pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cancel_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancel_buttonActionPerformed
+    private void cancel_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancel_buttonActionPerformed
 
-        setVisible(false);
+        this.setVisible(false);
     }//GEN-LAST:event_cancel_buttonActionPerformed
 
-    private void ok_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ok_buttonActionPerformed
+    private void ok_buttonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ok_buttonActionPerformed
 
-        status_label.setText(LabelTranslatorSingleton.getInstance().translate("Verifying your password, please wait..."));
+        this.status_label.setText(LabelTranslatorSingleton.getInstance().translate("Verifying your password, please wait..."));
 
-        pack();
+        this.pack();
 
         final Dialog tthis = this;
 
         THREAD_POOL.execute(() -> {
             try {
-                byte[] pass = CryptTools.PBKDF2HMACSHA256(new String(current_pass_textfield.getPassword()), BASE642Bin(_salt), CryptTools.MASTER_PASSWORD_PBKDF2_ITERATIONS, CryptTools.MASTER_PASSWORD_PBKDF2_OUTPUT_BIT_LENGTH);
-                String pass_hash = Bin2BASE64(HashBin("SHA-1", pass));
+                final byte[] pass = CryptTools.PBKDF2HMACSHA256(new String(this.current_pass_textfield.getPassword()), BASE642Bin(this._salt), CryptTools.MASTER_PASSWORD_PBKDF2_ITERATIONS, CryptTools.MASTER_PASSWORD_PBKDF2_OUTPUT_BIT_LENGTH);
+                final String pass_hash = Bin2BASE64(HashBin("SHA-1", pass));
                 MiscTools.GUIRun(() -> {
-                    if (!pass_hash.equals(_current_pass_hash)) {
+                    if (!pass_hash.equals(this._current_pass_hash)) {
 
                         JOptionPane.showMessageDialog(tthis, LabelTranslatorSingleton.getInstance().translate("BAD PASSWORD!"), "Error", JOptionPane.ERROR_MESSAGE);
 
-                        status_label.setText("");
+                        this.status_label.setText("");
 
-                        pack();
+                        this.pack();
 
-                        current_pass_textfield.setText("");
+                        this.current_pass_textfield.setText("");
 
-                        current_pass_textfield.grabFocus();
+                        this.current_pass_textfield.grabFocus();
 
                     } else {
 
-                        _pass = pass;
+                        this._pass = pass;
 
-                        _current_pass_hash = pass_hash;
+                        this._current_pass_hash = pass_hash;
 
-                        _pass_ok = true;
+                        this._pass_ok = true;
 
                         tthis.setVisible(false);
                     }
                 });
-            } catch (HeadlessException | NoSuchAlgorithmException | InvalidKeySpecException ex) {
+            } catch (final HeadlessException | NoSuchAlgorithmException | InvalidKeySpecException ex) {
                 LOG.log(Level.SEVERE, ex.getMessage());
             }
         });
 
     }//GEN-LAST:event_ok_buttonActionPerformed
 
-    private void current_pass_textfieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_pass_textfieldKeyPressed
+    private void current_pass_textfieldKeyPressed(final java.awt.event.KeyEvent evt) {//GEN-FIRST:event_current_pass_textfieldKeyPressed
 
         if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
 
-            ok_buttonActionPerformed(null);
+            this.ok_buttonActionPerformed(null);
         }
     }//GEN-LAST:event_current_pass_textfieldKeyPressed
 

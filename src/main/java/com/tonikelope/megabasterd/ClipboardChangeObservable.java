@@ -9,10 +9,7 @@
  */
 package com.tonikelope.megabasterd;
 
-import java.awt.datatransfer.Transferable;
-
 /**
- *
  * @author tonikelope
  */
 public interface ClipboardChangeObservable {
@@ -21,7 +18,7 @@ public interface ClipboardChangeObservable {
 
     void detachObserver(ClipboardChangeObserver observer);
 
-    Transferable getContents();
+//    Transferable getContents();
 
     void notifyChangeToMyObservers();
 
